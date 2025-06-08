@@ -23,7 +23,6 @@ const ApplyVisa = () => {
     loading: applicationLoading, 
     applicationId,
     applicationSubmitted,
-    createApplication,
     submitApplication,
     calculateVisaFee 
   } = useVisaApplication();
@@ -40,6 +39,8 @@ const ApplyVisa = () => {
           const response = await visaTypeService.getVisaTypeById(typeId);
           if (response.data) {
             setInitialVisaType({ type, id: typeId });
+            // Store the visa type ID for later use
+            localStorage.setItem('selected_visa_type_id', typeId);
           } else {
             toast({
               title: "Error",
@@ -71,19 +72,19 @@ const ApplyVisa = () => {
         throw new Error("No visa type selected");
       }
 
-      // Check if we already have an application ID in localStorage
-      const savedApplicationId = localStorage.getItem('current_application_id');
-      
-      // Only create application if one doesn't exist
-      if (!savedApplicationId && !applicationId) {
-        await createApplication(formData.travelInfo.visaType, initialVisaType.id);
-      }
-
-      // Submit the application
+      // Submit the complete application
       await submitApplication(formData);
+      
+      // Set the selected visa type for payment
       setSelectedVisaType(formData.travelInfo.visaType);
       setShowPayment(true);
+
+      // Clear form data from localStorage after successful submission
+      localStorage.removeItem("visaApplicationData");
+      localStorage.removeItem("uploadedDocuments");
+      // Keep current_application_id for payment reference
     } catch (error) {
+      console.error('Error submitting application:', error);
       toast({
         title: "Error",
         description: "Failed to process your application. Please try again.",

@@ -141,7 +141,7 @@ export const visaApplicationService = {
   // Update personal information
   updatePersonalInfo: async (applicationId: string, data: PersonalInfo): Promise<ApiResponse<VisaApplication>> => {
     const response = await apiClient.put<ApiResponse<VisaApplication>>(
-      `/applications/${applicationId}/personal-info`,
+      `/personal-info/${applicationId}`,
       data,
       { headers: getAuthHeader() }
     );
@@ -151,7 +151,7 @@ export const visaApplicationService = {
   // Update travel information
   updateTravelInfo: async (applicationId: string, data: TravelInfo): Promise<ApiResponse<VisaApplication>> => {
     const response = await apiClient.put<ApiResponse<VisaApplication>>(
-      `/applications/${applicationId}/travel-info`,
+      `/travel-info/${applicationId}`,
       data,
       { headers: getAuthHeader() }
     );
@@ -161,7 +161,7 @@ export const visaApplicationService = {
   // Update financial information
   updateFinancialInfo: async (applicationId: string, data: FinancialInfo): Promise<ApiResponse<VisaApplication>> => {
     const response = await apiClient.put<ApiResponse<VisaApplication>>(
-      `/applications/${applicationId}/financial-info`,
+      `/financial-info/${applicationId}`,
       data,
       { headers: getAuthHeader() }
     );
