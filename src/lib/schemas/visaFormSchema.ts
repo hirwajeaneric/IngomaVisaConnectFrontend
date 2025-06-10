@@ -16,10 +16,10 @@ export const personalInfoSchema = z.object({
   passportNumber: z.string().min(5, { message: "Valid passport number is required" }),
   passportIssueDate: z.string().min(1, { message: "Passport issue date is required" }),
   passportExpiryDate: z.string().min(1, { message: "Passport expiry date is required" }),
-  placeOfPassportIssuance: z.string().min(1, { message: "Place of issuance is required" }),
+  passportIssuingCountry: z.string().min(1, { message: "Place of issuance is required" }),
   email: z.string().email({ message: "Valid email address is required" }),
   phone: z.string().min(5, { message: "Valid phone number is required" }),
-  currentAddress: z.string().min(5, { message: "Current address is required" }),
+  address: z.string().min(5, { message: "Current address is required" }),
   occupation: z.string().optional(),
   employerDetails: z.string().optional(),
 });

@@ -59,6 +59,7 @@ export const useVisaApplication = () => {
   };
 
   const submitApplication = async (formData: VisaFormValues) => {
+    const applicationId = localStorage.getItem('current_application_id');
     if (!applicationId) {
       throw new Error("No application ID found");
     }

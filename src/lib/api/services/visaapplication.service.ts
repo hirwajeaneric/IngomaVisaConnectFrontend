@@ -14,10 +14,12 @@ export interface PersonalInfo {
   passportNumber: string;
   passportIssueDate: string;
   passportExpiryDate: string;
-  placeOfPassportIssuance: string;
+  passportIssuingCountry: string;
   email: string;
   phone: string;
-  currentAddress: string;
+  address: string;
+  country: string;
+  city: string;
   occupation?: string;
   employerDetails?: string;
 }

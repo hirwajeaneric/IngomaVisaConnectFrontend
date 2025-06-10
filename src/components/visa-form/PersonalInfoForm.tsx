@@ -161,7 +161,7 @@ const PersonalInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false }
             />
             <FormField
               control={form.control}
-              name="placeOfPassportIssuance"
+              name="passportIssuingCountry"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Place of Issuance</FormLabel>
@@ -233,7 +233,7 @@ const PersonalInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false }
           </div>
           <FormField
             control={form.control}
-            name="currentAddress"
+            name="address"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Current Address</FormLabel>
@@ -244,6 +244,52 @@ const PersonalInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false }
               </FormItem>
             )}
           />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your country" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="us">United States</SelectItem>
+                      <SelectItem value="uk">United Kingdom</SelectItem>
+                      <SelectItem value="ca">Canada</SelectItem>
+                      <SelectItem value="fr">France</SelectItem>
+                      <SelectItem value="ke">Kenya</SelectItem>
+                      <SelectItem value="rw">Rwanda</SelectItem>
+                      <SelectItem value="tz">Tanzania</SelectItem>
+                      <SelectItem value="ug">Uganda</SelectItem>
+                      <SelectItem value="bi">Burundi</SelectItem>
+                      <SelectItem value="cd">DR Congo</SelectItem>
+                      <SelectItem value="ss">South Sudan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter your city" disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField

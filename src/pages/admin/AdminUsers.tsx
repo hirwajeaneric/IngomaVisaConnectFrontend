@@ -23,7 +23,7 @@ const AdminUsers = () => {
   const fetchUsers = useCallback(async () => {
     try {
       const response = await userService.getAllUsers();
-      setUsers(response.data);
+      setUsers(response.data as unknown as User[]);
     } catch (error) {
       toast({
         title: "Error",

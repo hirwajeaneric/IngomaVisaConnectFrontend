@@ -149,6 +149,18 @@ const DeclarationForm = ({
                         </p>
                       </div>
                       <div>
+                        <p className="text-sm text-muted-foreground">Country</p>
+                        <p className="font-medium">
+                          {completeFormData?.personalInfo.country || "Not provided"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">City</p>
+                        <p className="font-medium">
+                          {completeFormData?.personalInfo.city || "Not provided"}
+                        </p>
+                      </div>
+                      <div>
                         <p className="text-sm text-muted-foreground">Passport Number</p>
                         <p className="font-medium">
                           {completeFormData?.personalInfo.passportNumber || "Not provided"}
@@ -175,7 +187,7 @@ const DeclarationForm = ({
                       <div className="md:col-span-2">
                         <p className="text-sm text-muted-foreground">Address</p>
                         <p className="font-medium">
-                          {completeFormData?.personalInfo.currentAddress || "Not provided"}
+                          {completeFormData?.personalInfo.address || "Not provided"}
                         </p>
                       </div>
                     </div>
