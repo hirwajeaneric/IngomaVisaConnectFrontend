@@ -10,6 +10,16 @@ import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 interface TravelInfoFormProps {
   defaultValues: TravelInfoValues;
@@ -81,9 +91,19 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
     }
   }, [visaType, form]);
 
+  const handleSubmit = (data: TravelInfoValues) => {
+    // Transform the data to match backend expectations
+    const transformedData = {
+      ...data,
+      intendedEntryDate: data.entryDate,
+      intendedExitDate: data.exitDate,
+    };
+    onSubmit(transformedData);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="space-y-4">
           <FormField
             control={form.control}
@@ -127,7 +147,7 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
                 <FormLabel>Purpose of Travel</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Please describe the purpose of your visit to Burundi"
+                    placeholder="Describe your purpose of travel"
                     className="min-h-[100px]"
                     {...field}
                     disabled={isLoading}
@@ -143,11 +163,38 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
               control={form.control}
               name="entryDate"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Intended Entry Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} disabled={isLoading} />
-                  </FormControl>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Entry Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isLoading}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={isLoading}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -156,11 +203,38 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
               control={form.control}
               name="exitDate"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Intended Exit Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} disabled={isLoading} />
-                  </FormControl>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Exit Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isLoading}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={isLoading}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -199,14 +273,10 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 mt-1"
+                    <Checkbox
                       checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
+                      onCheckedChange={field.onChange}
                       disabled={isLoading}
-                      id="previousVisits"
-                      aria-label="Have you previously visited Burundi?"
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
@@ -228,7 +298,7 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
                       <FormLabel>Previous Visit Details</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Please provide dates, purpose, and visa type of your previous visits"
+                          placeholder="Enter details about your previous visits"
                           {...field}
                           disabled={isLoading}
                         />
@@ -253,7 +323,7 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Provide details about places you plan to visit and activities"
+                      placeholder="Enter your travel itinerary"
                       className="min-h-[100px]"
                       {...field}
                       disabled={isLoading}
@@ -268,15 +338,14 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
           {(visaType === "tourist" || visaType === "student" || visaType === "work") && (
             <FormField
               control={form.control}
-              name="accommodation"
+              name="accommodationDetails"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Accommodation Details</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Provide details about where you will be staying (hotel name, address, host information, etc.)"
-                      className="min-h-[100px]"
                       {...field}
+                      placeholder="Enter your accommodation details"
                       disabled={isLoading}
                     />
                   </FormControl>
@@ -285,6 +354,42 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
               )}
             />
           )}
+
+          <FormField
+            control={form.control}
+            name="hostDetails"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Host Details</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Enter your host details"
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="countriesVisitedOfAfterBurundi"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Countries to Visit After Burundi</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="List any countries you plan to visit after Burundi"
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {visaType === "transit" && (
             <>
@@ -303,7 +408,7 @@ const TravelInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false, in
               />
               <FormField
                 control={form.control}
-                name="countriesVisited"
+                name="countriesVisitedOfAfterBurundi"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Countries Visited Before/After</FormLabel>

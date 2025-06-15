@@ -20,25 +20,31 @@ export const personalInfoSchema = z.object({
   email: z.string().email({ message: "Valid email address is required" }),
   phone: z.string().min(5, { message: "Valid phone number is required" }),
   address: z.string().min(5, { message: "Current address is required" }),
+  country: z.string().min(1, { message: "Country is required" }),
+  city: z.string().min(1, { message: "City is required" }),
+  postalCode: z.string().min(1, { message: "Postal code is required" }),
   occupation: z.string().optional(),
   employerDetails: z.string().optional(),
 });
 
 // Travel Information Schema - Step 2
 export const travelInfoSchema = z.object({
-  visaType: z.enum(["tourist", "business", "work", "student", "transit"], {
-    required_error: "Please select a visa type"
+  visaType: z.string().min(1, { message: "Visa type is required" }),
+  entryDate: z.date({
+    required_error: "Entry date is required",
   }),
-  purposeOfTravel: z.string().min(10, { message: "Please provide purpose of your travel" }),
-  entryDate: z.string().min(1, { message: "Entry date is required" }),
-  exitDate: z.string().min(1, { message: "Exit date is required" }),
-  portOfEntry: z.string().min(1, { message: "Port of entry is required" }),
+  exitDate: z.date({
+    required_error: "Exit date is required",
+  }),
+  purposeOfTravel: z.string().min(1, { message: "Purpose of travel is required" }),
+  portOfEntry: z.string().optional(),
+  accommodationDetails: z.string().optional(),
+  travelItinerary: z.string().optional(),
   previousVisits: z.boolean().default(false),
   previousVisitDetails: z.string().optional(),
-  travelItinerary: z.string().optional(),
-  accommodation: z.string().optional(),
+  hostDetails: z.string().optional(),
   finalDestination: z.string().optional(),
-  countriesVisited: z.string().optional(),
+  countriesVisitedOfAfterBurundi: z.string().optional(),
 });
 
 // Financial Information Schema - Step 3
@@ -95,17 +101,18 @@ export const visaFormSchema = z.object({
 export type VisaFormValues = z.infer<typeof visaFormSchema>;
 export type PersonalInfoValues = z.infer<typeof personalInfoSchema>;
 export interface TravelInfoValues {
-  visaType: "tourist" | "business" | "work" | "student" | "transit";
-  purposeOfTravel: string;
+  visaType: string;
   entryDate: string;
   exitDate: string;
-  portOfEntry: string;
+  purposeOfTravel: string;
+  portOfEntry?: string;
+  accommodationDetails?: string;
+  travelItinerary?: string;
   previousVisits: boolean;
   previousVisitDetails?: string;
-  travelItinerary?: string;
-  accommodation: string;
+  hostDetails?: string;
   finalDestination?: string;
-  countriesVisited?: string;
+  countriesVisitedOfAfterBurundi?: string;
 }
 export type FinancialInfoValues = z.infer<typeof financialInfoSchema>;
 export type DocumentsValues = z.infer<typeof documentsSchema>;

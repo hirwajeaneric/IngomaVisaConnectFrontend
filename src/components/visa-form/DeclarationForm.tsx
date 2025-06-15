@@ -210,13 +210,13 @@ const DeclarationForm = ({
                       <div>
                         <p className="text-sm text-muted-foreground">Entry Date</p>
                         <p className="font-medium">
-                          {formatDate(completeFormData?.travelInfo.entryDate)}
+                          {formatDate(completeFormData?.travelInfo.entryDate?.toString())}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Exit Date</p>
                         <p className="font-medium">
-                          {formatDate(completeFormData?.travelInfo.exitDate)}
+                          {formatDate(completeFormData?.travelInfo.exitDate?.toString())}
                         </p>
                       </div>
                       <div>
@@ -228,7 +228,7 @@ const DeclarationForm = ({
                       <div className="md:col-span-2">
                         <p className="text-sm text-muted-foreground">Accommodation</p>
                         <p className="font-medium">
-                          {completeFormData?.travelInfo.accommodation || "Not provided"}
+                          {completeFormData?.travelInfo.accommodationDetails || "Not provided"}
                         </p>
                       </div>
                       <div className="md:col-span-2">

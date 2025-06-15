@@ -20,6 +20,7 @@ export interface PersonalInfo {
   address: string;
   country: string;
   city: string;
+  postalCode: string;
   occupation?: string;
   employerDetails?: string;
 }
@@ -34,9 +35,9 @@ export interface TravelInfo {
   previousVisits: boolean;
   previousVisitDetails?: string;
   travelItinerary?: string;
-  accommodation: string;
+  accommodationDetails?: string;
   finalDestination?: string;
-  countriesVisited?: string;
+  countriesVisitedOfAfterBurundi?: string;
 }
 
 export interface FinancialInfo {
@@ -152,7 +153,7 @@ export const visaApplicationService = {
 
   // Update travel information
   updateTravelInfo: async (applicationId: string, data: TravelInfo): Promise<ApiResponse<VisaApplication>> => {
-    const response = await apiClient.put<ApiResponse<VisaApplication>>(
+    const response = await apiClient.post<ApiResponse<VisaApplication>>(
       `/travel-info/${applicationId}`,
       data,
       { headers: getAuthHeader() }
@@ -162,7 +163,7 @@ export const visaApplicationService = {
 
   // Update financial information
   updateFinancialInfo: async (applicationId: string, data: FinancialInfo): Promise<ApiResponse<VisaApplication>> => {
-    const response = await apiClient.put<ApiResponse<VisaApplication>>(
+    const response = await apiClient.post<ApiResponse<VisaApplication>>(
       `/financial-info/${applicationId}`,
       data,
       { headers: getAuthHeader() }

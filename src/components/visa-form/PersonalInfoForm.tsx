@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { countries } from "@/lib/data/countries";
 
 interface PersonalInfoFormProps {
   defaultValues: PersonalInfoValues;
@@ -106,14 +107,11 @@ const PersonalInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false }
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="us">United States</SelectItem>
-                      <SelectItem value="uk">United Kingdom</SelectItem>
-                      <SelectItem value="ca">Canada</SelectItem>
-                      <SelectItem value="fr">France</SelectItem>
-                      <SelectItem value="ke">Kenya</SelectItem>
-                      <SelectItem value="rw">Rwanda</SelectItem>
-                      <SelectItem value="tz">Tanzania</SelectItem>
-                      <SelectItem value="ug">Uganda</SelectItem>
+                      {countries.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -164,10 +162,21 @@ const PersonalInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false }
               name="passportIssuingCountry"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Place of Issuance</FormLabel>
-                  <FormControl>
-                    <Input {...field} disabled={isLoading} />
-                  </FormControl>
+                  <FormLabel>Place of Issuance (Passport)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your place of issuance" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country.code} value={country.name}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -231,19 +240,35 @@ const PersonalInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false }
               )}
             />
           </div>
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Current Address</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Address</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="postalCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Postal Code</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -259,17 +284,11 @@ const PersonalInfoForm = ({ defaultValues, onSubmit, onBack, isLoading = false }
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="us">United States</SelectItem>
-                      <SelectItem value="uk">United Kingdom</SelectItem>
-                      <SelectItem value="ca">Canada</SelectItem>
-                      <SelectItem value="fr">France</SelectItem>
-                      <SelectItem value="ke">Kenya</SelectItem>
-                      <SelectItem value="rw">Rwanda</SelectItem>
-                      <SelectItem value="tz">Tanzania</SelectItem>
-                      <SelectItem value="ug">Uganda</SelectItem>
-                      <SelectItem value="bi">Burundi</SelectItem>
-                      <SelectItem value="cd">DR Congo</SelectItem>
-                      <SelectItem value="ss">South Sudan</SelectItem>
+                      {countries.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

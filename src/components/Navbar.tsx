@@ -53,7 +53,7 @@ const Navbar = () => {
     setIsAuthenticated(false);
     setUser(null);
     toast.success("Logged out successfully");
-    navigate('/');
+    window.location.href = '/';
   };
 
   const handleLanguageChange = (language: 'en' | 'fr') => {
@@ -137,7 +137,7 @@ const Navbar = () => {
                     <Link to="/profile" className="cursor-pointer">Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/apply-visa" className="cursor-pointer">Apply for Visa</Link>
+                    <Link to="/visa-types" className="cursor-pointer">Apply for Visa</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
