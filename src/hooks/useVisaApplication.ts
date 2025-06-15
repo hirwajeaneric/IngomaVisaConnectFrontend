@@ -73,8 +73,7 @@ export const useVisaApplication = () => {
       // Update travel information
       await visaApplicationService.updateTravelInfo(applicationId, {
         ...formData.travelInfo,
-        visaTypeId: localStorage.getItem('selected_visa_type_id') || '',
-        accommodation: formData.travelInfo.accommodation || 'Not specified',
+        visaTypeId: localStorage.getItem('selected_visa_type_id') || ''
       });
       
       // Update financial information
