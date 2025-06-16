@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,18 +7,17 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard } from 'lucide-react';
+import { VisaType } from '@/lib/api/services/visatype.service';
 
 interface PaymentProcessProps {
-  visaType: string;
-  amount: number;
+  visaType: VisaType;
   applicationId: string;
   onComplete?: () => void;
 }
 
 const PaymentProcess = ({ 
-  visaType = "Tourist Visa", 
-  amount = 50, 
-  applicationId = "APP12345", 
+  visaType,
+  applicationId,
   onComplete 
 }: PaymentProcessProps) => {
   const { toast } = useToast();
@@ -47,7 +45,7 @@ const PaymentProcess = ({
       setIsProcessing(false);
       toast({
         title: "Payment Successful",
-        description: `Your payment of $${amount} for ${visaType} has been processed.`,
+        description: `Your payment of $${visaType.price.toFixed(2)} for ${visaType.name} has been processed.`,
       });
       
       if (onComplete) {
@@ -63,7 +61,7 @@ const PaymentProcess = ({
       <CardHeader>
         <CardTitle>Complete Payment</CardTitle>
         <CardDescription>
-          Process payment for your {visaType} application (ID: {applicationId})
+          Process payment for your {visaType.name} application (ID: {applicationId})
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -72,12 +70,12 @@ const PaymentProcess = ({
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium">Payment Summary</h3>
-                <span className="text-lg font-bold">${amount}.00</span>
+                <span className="text-lg font-bold">${visaType.price.toFixed(2)}</span>
               </div>
               <div className="bg-gray-50 p-4 rounded-md mb-6">
                 <div className="flex justify-between mb-2">
-                  <span>{visaType} Fee</span>
-                  <span>${amount - 5}.00</span>
+                  <span>{visaType.name} Fee</span>
+                  <span>${(visaType.price - 5).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between mb-2">
                   <span>Processing Fee</span>
@@ -86,7 +84,7 @@ const PaymentProcess = ({
                 <div className="border-t border-gray-200 my-2"></div>
                 <div className="flex justify-between font-bold">
                   <span>Total</span>
-                  <span>${amount}.00</span>
+                  <span>${visaType.price.toFixed(2)}</span>
                 </div>
               </div>
             </div>

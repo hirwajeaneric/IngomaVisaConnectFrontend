@@ -7,7 +7,7 @@ import VisaApplicationForm from '@/components/visa-form/VisaApplicationForm';
 import { useVisaApplication } from '@/hooks/useVisaApplication';
 import { VisaFormValues } from '@/lib/schemas/visaFormSchema';
 import { useToast } from '@/hooks/use-toast';
-import { visaTypeService } from '@/lib/api/services/visatype.service';
+import { visaTypeService, VisaType } from '@/lib/api/services/visatype.service';
 import { Loader2 } from 'lucide-react';
 
 const ApplyVisa = () => {
@@ -15,8 +15,7 @@ const ApplyVisa = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [showPayment, setShowPayment] = useState(false);
-  const [selectedVisaType, setSelectedVisaType] = useState<string>('');
-  const [initialVisaType, setInitialVisaType] = useState<{ type: string; id: string } | null>(null);
+  const [selectedVisaType, setSelectedVisaType] = useState<VisaType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   const { 
@@ -24,21 +23,19 @@ const ApplyVisa = () => {
     applicationId,
     applicationSubmitted,
     submitApplication,
-    calculateVisaFee 
   } = useVisaApplication();
 
   // Get visa type from URL parameters
   useEffect(() => {
     const loadVisaType = async () => {
       try {
-        const type = searchParams.get('type');
         const typeId = searchParams.get('typeId');
 
-        if (type && typeId) {
-          // Verify the visa type exists
+        if (typeId) {
+          // Fetch the complete visa type information
           const response = await visaTypeService.getVisaTypeById(typeId);
           if (response.data) {
-            setInitialVisaType({ type, id: typeId });
+            setSelectedVisaType(response.data);
             // Store the visa type ID for later use
             localStorage.setItem('selected_visa_type_id', typeId);
           } else {
@@ -68,15 +65,12 @@ const ApplyVisa = () => {
 
   const handleApplicationComplete = async (formData: VisaFormValues) => {
     try {
-      if (!initialVisaType) {
+      if (!selectedVisaType) {
         throw new Error("No visa type selected");
       }
 
       // Submit the complete application
       await submitApplication(formData);
-      
-      // Set the selected visa type for payment
-      setSelectedVisaType(formData.travelInfo.visaType);
       setShowPayment(true);
 
       // Clear form data from localStorage after successful submission
@@ -90,17 +84,6 @@ const ApplyVisa = () => {
         description: "Failed to process your application. Please try again.",
         variant: "destructive",
       });
-    }
-  };
-
-  const getVisaTypeName = (visaType: string) => {
-    switch(visaType) {
-      case 'tourist': return 'Tourist Visa';
-      case 'business': return 'Business Visa';
-      case 'work': return 'Work Visa';
-      case 'student': return 'Student Visa';
-      case 'transit': return 'Transit Visa';
-      default: return 'Tourist Visa';
     }
   };
 
@@ -119,7 +102,7 @@ const ApplyVisa = () => {
     );
   }
 
-  if (showPayment && applicationSubmitted) {
+  if (showPayment && applicationSubmitted && selectedVisaType) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -135,8 +118,7 @@ const ApplyVisa = () => {
               </div>
               
               <PaymentProcess 
-                visaType={getVisaTypeName(selectedVisaType)}
-                amount={calculateVisaFee(selectedVisaType)}
+                visaType={selectedVisaType}
                 applicationId={applicationId || ''}
               />
             </div>
@@ -165,7 +147,7 @@ const ApplyVisa = () => {
             <VisaApplicationForm 
               onComplete={handleApplicationComplete}
               isLoading={applicationLoading}
-              initialVisaType={initialVisaType}
+              initialVisaType={selectedVisaType ? { type: selectedVisaType.slug, id: selectedVisaType.id } : null}
             />
           </div>
         </div>
