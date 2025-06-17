@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard } from 'lucide-react';
 import { VisaType } from '@/lib/api/services/visatype.service';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { paymentService } from '@/lib/api/services/payment.service';
 
 interface PaymentProcessProps {
   visaType: VisaType;
@@ -14,45 +16,121 @@ interface PaymentProcessProps {
   onComplete?: () => void;
 }
 
+const PaymentForm = ({ onSuccess }: { onSuccess: () => void }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment-success`,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Payment Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        onSuccess();
+      }
+    } catch (err) {
+      toast({
+        title: "Payment Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-6">
+        <PaymentElement />
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isProcessing || !stripe || !elements}
+        >
+          {isProcessing ? 'Processing...' : 'Pay Now'}
+        </Button>
+      </div>
+    </form>
+  );
+};
+
 const PaymentProcess = ({ 
   visaType,
   applicationId,
   onComplete 
 }: PaymentProcessProps) => {
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: '',
-    cardholderName: '',
-    expiryDate: '',
-    cvv: ''
-  });
+  const { toast } = useToast();
+  const [clientSecret, setClientSecret] = useState<string>();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCardDetails(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      toast({
-        title: "Payment Successful",
-        description: `Your payment of $${visaType.price.toFixed(2)} for ${visaType.name} has been processed.`,
-      });
-      
-      if (onComplete) {
-        onComplete();
-      } else {
-        navigate('/dashboard');
+  useEffect(() => {
+    const initializePayment = async () => {
+      try {
+        const result = await paymentService.createPaymentIntent(applicationId, visaType.price);
+        console.log(result);
+        if (result.success) {
+          setClientSecret(result.data.clientSecret);
+          localStorage.setItem('current_payment_id', result.data.paymentId);
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to initialize payment. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error in PaymentProcess:", error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
       }
-    }, 2000);
+    };
+
+    initializePayment();
+  }, [applicationId, toast, visaType.price]);
+
+  const handleSuccess = () => {
+    if (onComplete) {
+      onComplete();
+    } else {
+      navigate('/payment-success', { 
+        state: { applicationId }
+      });
+    }
   };
+
+  if (!clientSecret) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="flex items-center justify-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -63,98 +141,40 @@ const PaymentProcess = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Payment Summary</h3>
-                <span className="text-lg font-bold">${visaType.price.toFixed(2)}</span>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-md mb-6">
-                <div className="flex justify-between mb-2">
-                  <span>{visaType.name} Fee</span>
-                  <span>${(visaType.price - 5).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span>Processing Fee</span>
-                  <span>$5.00</span>
-                </div>
-                <div className="border-t border-gray-200 my-2"></div>
-                <div className="flex justify-between font-bold">
-                  <span>Total</span>
-                  <span>${visaType.price.toFixed(2)}</span>
-                </div>
-              </div>
+        <div className="space-y-6">
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Payment Summary</h3>
+              <span className="text-lg font-bold">${visaType.price.toFixed(2)}</span>
             </div>
-
-            <div>
-              <Label className="text-base flex items-center">
-                <CreditCard className="mr-2 h-5 w-5" />
-                Credit/Debit Card Payment
-              </Label>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="cardNumber">Card Number</Label>
-                <Input 
-                  id="cardNumber"
-                  name="cardNumber"
-                  placeholder="1234 5678 9012 3456"
-                  value={cardDetails.cardNumber}
-                  onChange={handleInputChange}
-                  required
-                />
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <div className="flex justify-between mb-2">
+                <span>{visaType.name} Fee</span>
+                <span>${(visaType.price - 5).toFixed(2)}</span>
               </div>
-              <div>
-                <Label htmlFor="cardholderName">Cardholder Name</Label>
-                <Input 
-                  id="cardholderName"
-                  name="cardholderName"
-                  placeholder="John Smith"
-                  value={cardDetails.cardholderName}
-                  onChange={handleInputChange}
-                  required
-                />
+              <div className="flex justify-between mb-2">
+                <span>Processing Fee</span>
+                <span>$5.00</span>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="expiryDate">Expiry Date</Label>
-                  <Input 
-                    id="expiryDate"
-                    name="expiryDate"
-                    placeholder="MM/YY"
-                    value={cardDetails.expiryDate}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cvv">CVV</Label>
-                  <Input 
-                    id="cvv"
-                    name="cvv"
-                    type="password"
-                    placeholder="123"
-                    value={cardDetails.cvv}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+              <div className="border-t border-gray-200 my-2"></div>
+              <div className="flex justify-between font-bold">
+                <span>Total</span>
+                <span>${visaType.price.toFixed(2)}</span>
               </div>
             </div>
           </div>
-          
-          <CardFooter className="px-0 pt-6">
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isProcessing}
-            >
-              {isProcessing ? 'Processing...' : 'Pay Now'}
-            </Button>
-          </CardFooter>
-        </form>
+
+          <div>
+            <Label className="text-base flex items-center">
+              <CreditCard className="mr-2 h-5 w-5" />
+              Credit/Debit Card Payment
+            </Label>
+          </div>
+
+          <Elements stripe={paymentService.getStripe()} options={{ clientSecret }}>
+            <PaymentForm onSuccess={handleSuccess} />
+          </Elements>
+        </div>
       </CardContent>
     </Card>
   );

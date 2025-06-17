@@ -46,6 +46,7 @@ import ConfirmPasswordReset from "./components/ConfirmPasswordReset";
 import AdminUpdateVisaType from "./pages/admin/AdminUpdateService";
 import AdminUpdateService from "./pages/admin/AdminUpdateService";
 import Payment from '@/pages/Payment';
+import PaymentSuccess from '@/pages/PaymentSuccess';
 
 const App = () => {
   const queryClient = new QueryClient();
@@ -260,8 +261,23 @@ const App = () => {
                 }
               />
 
-              {/* Payment Route */}
-              <Route path="/payment" element={<Payment />} />
+              {/* Payment Routes */}
+              <Route
+                path="/payment"
+                element={
+                  <RouteGuard>
+                    <Payment />
+                  </RouteGuard>
+                }
+              />
+              <Route
+                path="/payment-success"
+                element={
+                  <RouteGuard>
+                    <PaymentSuccess />
+                  </RouteGuard>
+                }
+              />
 
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
