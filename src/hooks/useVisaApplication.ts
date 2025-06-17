@@ -17,7 +17,7 @@ export const useVisaApplication = () => {
     try {
       setLoading(true);
       const response = await visaApplicationService.createApplication(visaTypeId);
-      
+
       if (response.data) {
         setApplicationId(response.data.id);
         return response.data;
@@ -60,35 +60,40 @@ export const useVisaApplication = () => {
 
   const submitApplication = async (formData: VisaFormValues) => {
     const applicationId = localStorage.getItem('current_application_id');
+    const visaTypeId = localStorage.getItem('selected_visa_type_id');
     if (!applicationId) {
       throw new Error("No application ID found");
     }
 
     try {
       setLoading(true);
-      
+
       // Update personal information
       await visaApplicationService.updatePersonalInfo(applicationId, formData.personalInfo);
-      
+
       // Update travel information
       await visaApplicationService.updateTravelInfo(applicationId, {
         ...formData.travelInfo,
-        visaTypeId: localStorage.getItem('selected_visa_type_id') || ''
+        visaTypeId: visaTypeId || ''
       });
-      
+
       // Update financial information
       await visaApplicationService.updateFinancialInfo(applicationId, formData.financialInfo);
-      
+
       // Submit the application
       const response = await visaApplicationService.submitApplication(applicationId);
-      
+      console.log(response);
       if (response.data) {
         setApplicationSubmitted(true);
         toast({
           title: "Application Submitted",
           description: "Your visa application has been submitted successfully.",
         });
-        return response.data;
+        return {
+          success: true,
+          applicationId: applicationId,
+          visaTypeId: visaTypeId,
+        };
       }
     } catch (error) {
       console.error('[useVisaApplication] Failed to submit application:', error);
@@ -97,7 +102,7 @@ export const useVisaApplication = () => {
         description: "Failed to submit application. Please try again.",
         variant: "destructive",
       });
-      throw error;
+      // throw error;
     } finally {
       setLoading(false);
     }

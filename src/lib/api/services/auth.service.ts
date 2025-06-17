@@ -79,13 +79,17 @@ export const authService = {
   logout: async () => {
     try {
       // Call the logout endpoint to clear the refresh token cookie
-      await apiClient.post('/auth/logout');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
+      const response = await apiClient.post('/auth/logout');
+      if (response.status === 200) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+      }
+      return true;
     } catch (error) {
-      console.error('Logout failed:', error);
       localStorage.removeItem('access_token');
       localStorage.removeItem('user');
+      console.error('Logout failed:', error);
+      return false;
     }
   },
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut, Globe, ChevronDown } from "lucide-react";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -48,19 +48,24 @@ const Navbar = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleLogout = () => {
-    authService.logout();
-    setIsAuthenticated(false);
-    setUser(null);
-    toast.success("Logged out successfully");
-    window.location.href = '/';
+  const handleLogout = async () => {
+    const isLoggedOut = await authService.logout();
+    if (isLoggedOut) {
+      setIsAuthenticated(false);
+      setUser(null);
+      toast.success("Logged out successfully");
+      
+      window.location.href = '/';
+    } else {
+      toast.error("Logout failed");
+    }
   };
 
   const handleLanguageChange = (language: 'en' | 'fr') => {
     setCurrentLanguage(language);
     toast.success(
-      language === 'en' 
-        ? 'The application language has been set to English.' 
+      language === 'en'
+        ? 'The application language has been set to English.'
         : 'La langue de l\'application a été définie sur le français.'
     );
   };
@@ -94,7 +99,7 @@ const Navbar = () => {
           <Link to="/requirements" className="text-gray-700 hover:text-primary transition">Requirements</Link>
           <Link to="/faqs" className="text-gray-700 hover:text-primary transition">FAQs</Link>
           <Link to="/contact" className="text-gray-700 hover:text-primary transition">Contact</Link>
-          
+
           {/* Language Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -119,7 +124,7 @@ const Navbar = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <DropdownMenu>
@@ -140,7 +145,7 @@ const Navbar = () => {
                     <Link to="/visa-types" className="cursor-pointer">Apply for Visa</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-red-500 focus:text-red-500 cursor-pointer"
                     onClick={handleLogout}
                   >
@@ -187,7 +192,7 @@ const Navbar = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           <button onClick={toggleMenu} className="text-gray-700 focus:outline-none">
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -203,7 +208,7 @@ const Navbar = () => {
             <Link to="/requirements" className="text-gray-700 hover:text-primary py-2 transition" onClick={toggleMenu}>Requirements</Link>
             <Link to="/faqs" className="text-gray-700 hover:text-primary py-2 transition" onClick={toggleMenu}>FAQs</Link>
             <Link to="/contact" className="text-gray-700 hover:text-primary py-2 transition" onClick={toggleMenu}>Contact</Link>
-            
+
             <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
               {isAuthenticated ? (
                 <>
@@ -219,8 +224,8 @@ const Navbar = () => {
                       Profile
                     </Button>
                   </Link>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full justify-start text-red-500 hover:text-red-600"
                     onClick={() => {
                       handleLogout();

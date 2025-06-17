@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import PaymentProcess from '@/components/PaymentProcess';
 import VisaApplicationForm from '@/components/visa-form/VisaApplicationForm';
 import { useVisaApplication } from '@/hooks/useVisaApplication';
 import { VisaFormValues } from '@/lib/schemas/visaFormSchema';
@@ -14,14 +13,12 @@ const ApplyVisa = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [showPayment, setShowPayment] = useState(false);
   const [selectedVisaType, setSelectedVisaType] = useState<VisaType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   const { 
     loading: applicationLoading, 
     applicationId,
-    applicationSubmitted,
     submitApplication,
   } = useVisaApplication();
 
@@ -70,13 +67,15 @@ const ApplyVisa = () => {
       }
 
       // Submit the complete application
-      await submitApplication(formData);
-      setShowPayment(true);
+      const response = await submitApplication(formData);
+      console.log(response);
 
       // Clear form data from localStorage after successful submission
       localStorage.removeItem("visaApplicationData");
       localStorage.removeItem("uploadedDocuments");
-      // Keep current_application_id for payment reference
+      console.log(`/payment?applicationId=${response?.applicationId}&visaTypeId=${response?.visaTypeId}`);
+      // Redirect to payment page with necessary parameters
+      // navigate(`/payment?applicationId=${response?.applicationId}&visaTypeId=${response?.visaTypeId}`);
     } catch (error) {
       console.error('Error submitting application:', error);
       toast({
@@ -97,34 +96,6 @@ const ApplyVisa = () => {
             <span>Loading visa information...</span>
           </div>
         </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (showPayment && applicationSubmitted && selectedVisaType) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        
-        <div className="flex-1 bg-gray-50">
-          <div className="container mx-auto px-4 py-16">
-            <div className="max-w-4xl mx-auto">
-              <div className="mb-8 text-center">
-                <h1 className="text-2xl font-bold text-primary">Complete Your Payment</h1>
-                <p className="text-gray-600 mt-2">
-                  Please complete payment to process your visa application.
-                </p>
-              </div>
-              
-              <PaymentProcess 
-                visaType={selectedVisaType}
-                applicationId={applicationId || ''}
-              />
-            </div>
-          </div>
-        </div>
-        
         <Footer />
       </div>
     );
