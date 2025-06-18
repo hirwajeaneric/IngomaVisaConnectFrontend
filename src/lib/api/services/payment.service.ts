@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from '../config';
 import { loadStripe } from '@stripe/stripe-js';
 
@@ -35,30 +36,48 @@ const getAuthHeader = () => {
 export const paymentService = {
   // Create payment intent
   createPaymentIntent: async (applicationId: string, amount: number): Promise<PaymentIntentResponse> => {
-    const response = await apiClient.post<PaymentIntentResponse>(
-      `/payment/${applicationId}/create-intent`,
-      { amount },
-      { headers: getAuthHeader() }
-    );
+    let response;
+    try {
+      response = await apiClient.post<PaymentIntentResponse>(
+        `/payment/${applicationId}/create-intent`,
+        { amount },
+        { headers: getAuthHeader() }
+      );
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Update payment status
   updatePaymentStatus: async (paymentId: string, stripePaymentId: string): Promise<PaymentStatusResponse> => {
-    const response = await apiClient.post<PaymentStatusResponse>(
-      `/payment/${paymentId}/update-status`,
-      { stripePaymentId },
-      { headers: getAuthHeader() }
-    );
+    let response;
+    try {
+      response = await apiClient.post<PaymentStatusResponse>(
+        `/payment/${paymentId}/update-status`,
+        { stripePaymentId },
+        { headers: getAuthHeader() }
+      );
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Get payment status
   getPaymentStatus: async (paymentId: string): Promise<PaymentStatusResponse> => {
-    const response = await apiClient.get<PaymentStatusResponse>(
-      `/payment/${paymentId}/status`,
-      { headers: getAuthHeader() }
-    );
+    let response;
+    try {
+      response = await apiClient.get<PaymentStatusResponse>(
+        `/payment/${paymentId}/status`,
+        { headers: getAuthHeader() }
+      );
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 

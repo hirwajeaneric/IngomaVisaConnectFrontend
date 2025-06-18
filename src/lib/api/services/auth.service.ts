@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from '../config';
 
 interface LoginCredentials {
@@ -16,6 +17,7 @@ interface RegisterData {
 interface LoginResponse {
   success: boolean;
   message: string;
+  code: string;
   data: {
     token: string;
     refreshToken: string;
@@ -31,47 +33,80 @@ interface LoginResponse {
 export const authService = {
   // Login user
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
-    if (response.data.data.token) {
-      // Store tokens in localStorage
-      localStorage.setItem('access_token', response.data.data.token);
-      
-      // Store user data in localStorage
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+    let response;
+    try {
+      response = await apiClient.post<LoginResponse>('/auth/login', credentials);
+      if (response.data.data.token) {
+        localStorage.setItem('access_token', response.data.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      }
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
     }
     return response.data;
   },
 
   // Register new user
   register: async (userData: RegisterData) => {
-    const response = await apiClient.post('/auth/signup', userData);
+    let response;
+    try {
+      response = await apiClient.post('/auth/signup', userData);
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Verify OTP
   verifyOTP: async (email: string, otp: string) => {
-    const response = await apiClient.post('/auth/verify-otp', { email, otp });
+    let response;
+    try {
+      response = await apiClient.post('/auth/verify-otp', { email, otp });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Resend OTP
   resendOTP: async (email: string) => {
-    const response = await apiClient.post(`/auth/resend-otp?email=${encodeURIComponent(email)}`);
+    let response;
+    try {
+      response = await apiClient.post(`/auth/resend-otp?email=${encodeURIComponent(email)}`);
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Request password reset
   requestPasswordReset: async (email: string) => {
-    const response = await apiClient.post('/auth/request-password-reset', { email });
+    let response;
+    try {
+      response = await apiClient.post('/auth/request-password-reset', { email });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Confirm password reset
   confirmPasswordReset: async (token: string, newPassword: string) => {
-    const response = await apiClient.post('/auth/confirm-password-reset', {
-      token,
-      newPassword,
-    });
+    let response;
+    try {
+      response = await apiClient.post('/auth/confirm-password-reset', {
+        token,
+        newPassword,
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 

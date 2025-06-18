@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "../config";
 
 export interface UserProfile {
@@ -74,57 +75,111 @@ const getAuthHeader = () => {
 
 export const userService = {
   getProfile: async (): Promise<GetUserProfileResponse> => {
-    const response = await apiClient.get<GetUserProfileResponse>('/users/profile', {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.get<GetUserProfileResponse>('/users/profile', {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
   updateProfile: async (data: UpdateProfileData): Promise<GetUserProfileResponse> => {
-    const response = await apiClient.put<GetUserProfileResponse>('/users/profile', data, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.put<GetUserProfileResponse>('/users/profile', data, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
   updateAvatar: async (data: UpdateAvatarData): Promise<GetUserProfileResponse> => {
-    const response = await apiClient.put<GetUserProfileResponse>('/users/avatar', data, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.put<GetUserProfileResponse>('/users/avatar', data, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
   getAllUsers: async (): Promise<GetUserProfileResponse> => {
-    const response = await apiClient.get('/users', {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.get('/users', {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
   getUserById: async (userId: string): Promise<GetUserProfileResponse> => {
-    const response = await apiClient.get(`/users/${userId}`, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.get(`/users/${userId}`, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
   createOfficer: async (data: CreateOfficerDto): Promise<GetUserProfileResponse> => {
-    const response = await apiClient.post('/users/officer', data, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.post('/users/officer', data, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
   updateUser: async (userId: string, data: UpdateUserDto): Promise<GetUserProfileResponse> => {
-    const response = await apiClient.put(`/users/${userId}`, data, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.put(`/users/${userId}`, data, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
   deleteUser: async (userId: string): Promise<GetUserProfileResponse> => {
-    const response = await apiClient.delete(`/users/${userId}`, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.delete(`/users/${userId}`, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },  
   updateOfficerPermissions: async (officerId: string, permissions: string[]): Promise<GetUserProfileResponse> => {
-    const response = await apiClient.put(`/users/officer/${officerId}/permissions`, { permissions }, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.put(`/users/officer/${officerId}/permissions`, { permissions }, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   }
 }; 

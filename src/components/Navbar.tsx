@@ -53,11 +53,10 @@ const Navbar = () => {
     if (isLoggedOut) {
       setIsAuthenticated(false);
       setUser(null);
-      toast.success("Logged out successfully");
-      
+      toast.success("Logged out successfully"); 
       window.location.href = '/';
     } else {
-      toast.error("Logout failed");
+      window.location.href = '/';
     }
   };
 

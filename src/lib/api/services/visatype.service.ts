@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from '../config';
 
 export interface VisaType {
@@ -53,43 +54,79 @@ const getAuthHeader = () => {
 export const visaTypeService = {
   // Create a new visa type
   createVisaType: async (data: CreateVisaTypeData): Promise<ApiResponse<VisaType>> => {
-    const response = await apiClient.post<ApiResponse<VisaType>>('/visas/types', data, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.post<ApiResponse<VisaType>>('/visas/types', data, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Get all visa types
   getAllVisaTypes: async (): Promise<ApiResponse<VisaType[]>> => {
-    const response = await apiClient.get<ApiResponse<VisaType[]>>('/visas/types');
+    let response;
+    try {
+      response = await apiClient.get<ApiResponse<VisaType[]>>('/visas/types');
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Get visa type by ID
   getVisaTypeById: async (id: string): Promise<ApiResponse<VisaType>> => {
-    const response = await apiClient.get<ApiResponse<VisaType>>(`/visas/types/${id}`);
+    let response;
+    try {
+      response = await apiClient.get<ApiResponse<VisaType>>(`/visas/types/${id}`);
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Get visa type by slug
   getVisaTypeBySlug: async (slug: string): Promise<ApiResponse<VisaType>> => {
-    const response = await apiClient.get<ApiResponse<VisaType>>(`/visas/types/slug/${slug}`);
+    let response;
+    try {
+      response = await apiClient.get<ApiResponse<VisaType>>(`/visas/types/slug/${slug}`);
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Update visa type
   updateVisaType: async (id: string, data: UpdateVisaTypeData): Promise<ApiResponse<VisaType>> => {
-    const response = await apiClient.put<ApiResponse<VisaType>>(`/visas/types/${id}`, data, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.put<ApiResponse<VisaType>>(`/visas/types/${id}`, data, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   },
 
   // Delete visa type
   deleteVisaType: async (id: string): Promise<ApiResponse<void>> => {
-    const response = await apiClient.delete<ApiResponse<void>>(`/visas/types/${id}`, {
-      headers: getAuthHeader()
-    });
+    let response;
+    try {
+      response = await apiClient.delete<ApiResponse<void>>(`/visas/types/${id}`, {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
     return response.data;
   }
 };
