@@ -88,7 +88,6 @@ const PaymentProcess = ({
     const initializePayment = async () => {
       try {
         const result = await paymentService.createPaymentIntent(applicationId, visaType.price);
-        console.log(result);
         if (result.success) {
           setClientSecret(result.data.clientSecret);
           localStorage.setItem('current_payment_id', result.data.paymentId);
