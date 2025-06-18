@@ -1,12 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { visaApplicationService, DocumentType } from '@/lib/api/services/visaapplication.service';
 import { useToast } from './use-toast';
 import { VisaFormValues } from '@/lib/schemas/visaFormSchema';
+import { useNavigate } from 'react-router-dom';
 
 export type UploadProgressCallback = (progress: number) => void;
 
 export const useVisaApplication = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [applicationId, setApplicationId] = useState<string | null>(() => {
     return localStorage.getItem('current_application_id');
@@ -87,19 +90,20 @@ export const useVisaApplication = () => {
         setApplicationSubmitted(true);
         toast({
           title: "Application Submitted",
-          description: "Your visa application has been submitted successfully.",
+          description: "Your visa application has been submitted successfully. Redirecting to payment",
         });
+        navigate(`/payment?applicationId=${applicationId}&visaTypeId=${visaTypeId}`);
         return {
           success: true,
           applicationId: applicationId,
           visaTypeId: visaTypeId,
         };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[useVisaApplication] Failed to submit application:', error);
       toast({
         title: "Error",
-        description: "Failed to submit application. Please try again.",
+        description: error.message,
         variant: "destructive",
       });
       // throw error;
