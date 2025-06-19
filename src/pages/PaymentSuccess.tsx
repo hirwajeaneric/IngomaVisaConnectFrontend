@@ -47,11 +47,11 @@ const PaymentSuccess = () => {
         }
       } catch (error) {
         console.error('Error verifying payment:', error);
-        toast({
-          title: "Error",
-          description: "Failed to verify payment status. Please contact support.",
-          variant: "destructive",
-        });
+        // toast({
+        //   title: "Error",
+        //   description: "Failed to verify payment status. Please contact support.",
+        //   variant: "destructive",
+        // });
       } finally {
         setIsVerifying(false);
       }
