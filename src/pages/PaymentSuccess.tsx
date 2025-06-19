@@ -18,27 +18,22 @@ const PaymentSuccess = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState(true);
+  const [paymentIntent, setPaymentIntent] = useState('');
+  const [paymentId, setPaymentId] = useState('');
   
   // Get paymentId from localStorage and applicationId from state/params
-  const paymentId = localStorage.getItem('current_payment_id');
   const applicationId = searchParams.get('applicationId') || (location.state as LocationState)?.applicationId;
-  const paymentIntent = searchParams.get('payment_intent');
-
+  
   useEffect(() => {
+    const paymentId = localStorage.getItem('current_payment_id');
+    const paymentIntent = searchParams.get('payment_intent');
+    setPaymentId(paymentId as string);
+    setPaymentIntent(paymentIntent as string);
+    
     const verifyPayment = async () => {
-      if (!paymentId || !paymentIntent) {
-        toast({
-          title: "Error",
-          description: "Payment information not found. Please contact support.",
-          variant: "destructive",
-        });
-        setIsVerifying(false);
-        return;
-      }
-
       try {
         // Update payment status
-        const response = await paymentService.updatePaymentStatus(paymentId, paymentIntent);
+        const response = await paymentService.updatePaymentStatus(paymentId as string, paymentIntent as string);
         
         if (response.data.paymentStatus === 'COMPLETED') {
           // Clear the payment ID from localStorage after successful verification
@@ -68,7 +63,7 @@ const PaymentSuccess = () => {
     return () => {
       localStorage.removeItem('current_payment_id');
     };
-  }, [paymentId, paymentIntent, toast]);
+  }, [paymentId, paymentIntent, searchParams, toast]);
 
   if (isVerifying) {
     return (

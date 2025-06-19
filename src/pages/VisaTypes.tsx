@@ -22,6 +22,10 @@ const VisaTypes = () => {
         // Only show active visa types
         const activeVisas = response.data.filter(visa => visa.isActive);
         setVisaTypes(activeVisas);
+        // Delete visa application data from the localstorage
+        localStorage.removeItem('current_application_id');
+        localStorage.removeItem('selected_visa_type_id');
+        localStorage.removeItem('current_payment_id');
       } catch (error) {
         console.error('Failed to fetch visa types:', error);
         toast({
