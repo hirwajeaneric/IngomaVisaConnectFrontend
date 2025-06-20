@@ -11,9 +11,10 @@ import {
 } from "lucide-react";
 import { getStatusBadge } from "@/components/widgets";
 import { formatDateTime } from "@/lib/utils";
+import { VisaApplication } from "@/types";
 
 interface ApplicationHeaderProps {
-  application: any;
+  application: VisaApplication;
   onExportPDF: () => void;
 }
 
@@ -28,7 +29,7 @@ export const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
           <div>
             <div className="flex items-center space-x-2">
               <h2 className="text-2xl font-bold">
-                {application.personalInfo.firstName} {application.personalInfo.lastName}
+                {application.personalInfo?.firstName} {application.personalInfo?.lastName}
               </h2>
               {getStatusBadge(application.status)}
             </div>
@@ -58,7 +59,7 @@ export const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
             <Calendar className="h-5 w-5 text-muted-foreground mr-2" />
             <div>
               <p className="text-sm text-muted-foreground">Submitted on</p>
-              <p className="font-medium">{formatDateTime(application.submissionDate)}</p>
+              <p className="font-medium">{formatDateTime(application.submissionDate || '')}</p>
             </div>
           </div>
           
