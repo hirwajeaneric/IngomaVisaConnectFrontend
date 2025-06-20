@@ -2,7 +2,7 @@ import React from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Bell, Mail, User, LogOut, Settings } from "lucide-react";
+import { Mail, User, LogOut, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { authService } from "@/lib/api/services/auth.service";
 import { useToast } from "@/components/ui/use-toast";
