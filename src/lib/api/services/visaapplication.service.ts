@@ -144,7 +144,6 @@ export const visaApplicationService = {
       const { message } = error.response.data;
       throw new Error(message);
     }
-    console.log(response.data);
     return response.data.data;
   },
 
