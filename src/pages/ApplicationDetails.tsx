@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,53 +11,37 @@ import { generatePDF } from "@/lib/report-generator";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
+import { useQuery } from "@tanstack/react-query";
+import { VisaApplicationResponse } from "@/types";
 
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState("status");
+  const [activeTab, setActiveTab] = useState("documents");
   const [newMessage, setNewMessage] = useState("");
 
-  // Mock application data - in a real app, this would be fetched from an API
-  const application = {
-    id: id || "APP-2354",
-    status: "under-review",
-    submissionDate: "2025-05-14T09:45:00Z",
-    lastUpdated: "2025-05-15T14:20:00Z",
-    visaType: "Tourist",
-    applicantName: "John Smith",
-    applicantEmail: "john.smith@example.com",
-    estimatedProcessingDays: 7,
-    daysRemaining: 5,
-    progress: 40,
-    documents: [
-      { name: "Passport Copy", status: "verified", updatedAt: "2025-05-14" },
-      { name: "Photo", status: "verified", updatedAt: "2025-05-14" },
-      { name: "Flight Itinerary", status: "pending", updatedAt: "2025-05-14" },
-      { name: "Hotel Reservation", status: "pending", updatedAt: "2025-05-14" },
-      { name: "Bank Statement", status: "requested", updatedAt: "2025-05-15" },
-    ],
-    history: [
-      { date: "2025-05-15T14:20:00Z", action: "Application status updated to 'Under Review'", by: "System" },
-      { date: "2025-05-15T10:15:00Z", action: "Additional document requested: Bank Statement", by: "Officer Sarah" },
-      { date: "2025-05-14T09:45:00Z", action: "Application submitted", by: "Applicant" },
-      { date: "2025-05-14T09:30:00Z", action: "Payment confirmed", by: "Payment System" },
-    ],
-    messages: [
-      { id: 1, date: "2025-05-15T14:25:00Z", from: "Officer Sarah", content: "Hello Mr. Smith, we require additional information about your planned activities in Burundi. Could you please provide a detailed itinerary?" },
-    ],
-    interviews: [
-      {
-        id: "int-001",
-        date: "2025-05-20",
-        time: "09:00 AM",
-        duration: "30 minutes",
-        officer: "Sarah Nkurunziza",
-        status: "scheduled",
-        joinUrl: "#",
-        location: "Online (Video Call)",
-      }
-    ],
-  };
+  const { data: application, isLoading, error } = useQuery({
+    queryKey: ['application', id],
+    queryFn: () => visaApplicationService.getApplicationById(id as string),
+    enabled: !!id
+  });
+
+  const mockMessages = [
+    { id: 1, date: "2025-05-15T14:25:00Z", from: "Officer Sarah", content: "Hello Mr. Smith, we require additional information about your planned activities in Burundi. Could you please provide a detailed itinerary?" },
+  ];
+
+  const mockInterviews = [
+    {
+      id: "int-001",
+      date: "2025-05-20",
+      time: "09:00 AM",
+      duration: "30 minutes",
+      officer: "Sarah Nkurunziza",
+      status: "scheduled",
+      joinUrl: "#",
+      location: "Online (Video Call)",
+    }
+  ];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -80,26 +63,60 @@ const ApplicationDetails = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "submitted":
+      case "SUBMITTED":
         return <Badge className="bg-blue-100 text-blue-800">Submitted</Badge>;
-      case "under-review":
+      case "UNDER_REVIEW":
         return <Badge className="bg-amber-100 text-amber-800">Under Review</Badge>;
-      case "approved":
+      case "APPROVED":
         return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
-      case "rejected":
+      case "REJECTED":
         return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-      case "pending":
+      case "PENDING":
         return <Badge variant="outline" className="bg-gray-100">Pending</Badge>;
-      case "verified":
+      case "VERIFIED":
         return <Badge className="bg-green-100 text-green-800">Verified</Badge>;
-      case "requested":
+      case "REQUESTED":
         return <Badge className="bg-purple-100 text-purple-800">Requested</Badge>;
-      case "scheduled":
+      case "SCHEDULED":
         return <Badge className="bg-blue-100 text-blue-800">Scheduled</Badge>;
-      case "completed":
+      case "COMPLETED":
         return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getDocumentStatusBadge = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return <Badge variant="outline" className="bg-gray-100">Pending</Badge>;
+      case "VERIFIED":
+        return <Badge className="bg-green-100 text-green-800">Verified</Badge>;
+      case "REJECTED":
+        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getDocumentTypeName = (type: string) => {
+    switch (type) {
+      case "passportCopy":
+        return "Passport Copy";
+      case "photos":
+        return "Passport Photos";
+      case "yellowFeverCertificate":
+        return "Yellow Fever Certificate";
+      case "travelInsurance":
+        return "Travel Insurance";
+      case "bankStatement":
+        return "Bank Statement";
+      case "employmentLetter":
+        return "Employment Letter";
+      case "invitationLetter":
+        return "Invitation Letter";
+      default:
+        return type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
     }
   };
 
@@ -108,14 +125,6 @@ const ApplicationDetails = () => {
 
     // In a real implementation, this would call an API to send a message
     console.log(`Sending message: ${newMessage}`);
-
-    // Add the new message to the messages array
-    application.messages.push({
-      id: application.messages.length + 1,
-      date: new Date().toISOString(),
-      from: "John Smith",
-      content: newMessage
-    });
 
     toast({
       title: "Message Sent",
@@ -127,10 +136,12 @@ const ApplicationDetails = () => {
 
   // Function to handle PDF download
   const handleDownloadPDF = async () => {
+    if (!application) return;
+
     try {
       // Prepare data for the PDF
       const reportData = {
-        title: `Visa Application - ${application.applicantName}`,
+        title: `Visa Application - ${application.personalInfo.firstName} ${application.personalInfo.lastName}`,
         dateRange: {
           from: formatDate(application.submissionDate),
           to: 'Present',
@@ -146,19 +157,23 @@ const ApplicationDetails = () => {
         }),
         logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Coat_of_arms_of_Burundi.svg/250px-Coat_of_arms_of_Burundi.svg.png',
         applicationData: {
-          id: application.id,
+          id: application.applicationNumber,
           status: application.status,
-          visaType: application.visaType,
-          applicantName: application.applicantName,
+          visaType: application.visaType.name,
+          applicantName: `${application.personalInfo.firstName} ${application.personalInfo.lastName}`,
           submissionDate: formatDateTime(application.submissionDate),
-          estimatedCompletion: `${application.daysRemaining} days remaining`,
-          documents: application.documents,
-          history: application.history.map(event => ({
+          estimatedCompletion: "Processing",
+          documents: application.documents.map(doc => ({
+            name: getDocumentTypeName(doc.documentType),
+            status: doc.verificationStatus,
+            updatedAt: formatDate(doc.uploadDate)
+          })),
+          history: mockHistory.map(event => ({
             date: formatDateTime(event.date),
             action: event.action,
             by: event.by
           })),
-          interviews: application.interviews.map(interview => ({
+          interviews: mockInterviews.map(interview => ({
             date: formatDate(interview.date),
             time: interview.time,
             duration: interview.duration,
@@ -185,6 +200,38 @@ const ApplicationDetails = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading application details...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !application) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600">Failed to load application details</p>
+            <Button onClick={() => window.location.reload()} className="mt-4">
+              Try Again
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -208,10 +255,10 @@ const ApplicationDetails = () => {
               <div className="flex flex-col md:flex-row justify-between md:items-center">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <h2 className="text-2xl font-bold">{application.visaType} Visa</h2>
+                    <h2 className="text-2xl font-bold">{application.visaType.name}</h2>
                     {getStatusBadge(application.status)}
                   </div>
-                  <p className="text-muted-foreground">Application ID: {application.id}</p>
+                  <p className="text-muted-foreground">Application ID: {application.applicationNumber}</p>
                 </div>
 
                 <div className="flex flex-col mt-4 md:mt-0 md:text-right">
@@ -224,7 +271,7 @@ const ApplicationDetails = () => {
                 <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="absolute h-full bg-primary rounded-full"
-                    style={{ width: `${application.progress}%` }}
+                    style={{ width: application.status === 'APPROVED' ? '100%' : application.status === 'UNDER_REVIEW' ? '60%' : '30%' }}
                   />
                 </div>
                 <div className="flex justify-between text-sm mt-2">
@@ -238,9 +285,9 @@ const ApplicationDetails = () => {
                 <div className="flex items-center">
                   <Calendar className="h-5 w-5 text-muted-foreground mr-3" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Estimated completion</p>
+                    <p className="text-sm text-muted-foreground">Processing time</p>
                     <p className="font-medium">
-                      {application.daysRemaining} days remaining
+                      {application.visaType.processingTime}
                     </p>
                   </div>
                 </div>
@@ -248,60 +295,30 @@ const ApplicationDetails = () => {
                 <div className="flex items-center">
                   <Clock className="h-5 w-5 text-muted-foreground mr-3" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Last update</p>
-                    <p className="font-medium">{formatDateTime(application.lastUpdated)}</p>
+                    <p className="text-sm text-muted-foreground">Visa duration</p>
+                    <p className="font-medium">{application.visaType.duration}</p>
                   </div>
                 </div>
 
-                {application.interviews.length > 0 && (
-                  <div className="flex items-center">
-                    <Video className="h-5 w-5 text-muted-foreground mr-3" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Interview scheduled</p>
-                      <p className="font-medium">
-                        {formatDate(application.interviews[0].date)} at {application.interviews[0].time}
-                      </p>
-                    </div>
+                <div className="flex items-center">
+                  <User className="h-5 w-5 text-muted-foreground mr-3" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Applicant</p>
+                    <p className="font-medium">
+                      {application.personalInfo.firstName} {application.personalInfo.lastName}
+                    </p>
                   </div>
-                )}
+                </div>
               </div>
             </CardContent>
           </Card>
 
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="mb-4">
-              <TabsTrigger value="status">Status & Timeline</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
               <TabsTrigger value="messages">Messages</TabsTrigger>
               <TabsTrigger value="interview">Interview</TabsTrigger>
             </TabsList>
-
-            {/* Status Tab */}
-            <TabsContent value="status">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Application Timeline</CardTitle>
-                  <CardDescription>
-                    Track the progress of your visa application
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="relative pl-6 border-l border-gray-200">
-                    {application.history.map((event, index) => (
-                      <div key={index} className="mb-8 relative">
-                        <div className="absolute -left-[13px] h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center">
-                          <div className="h-3 w-3 rounded-full bg-primary" />
-                        </div>
-                        <p className="font-medium">{event.action}</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {formatDateTime(event.date)} • {event.by}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             {/* Documents Tab */}
             <TabsContent value="documents">
@@ -314,34 +331,35 @@ const ApplicationDetails = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {application.documents.map((doc, index) => (
+                    {application.documents.map((doc) => (
                       <div
-                        key={index}
+                        key={doc.id}
                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30"
                       >
                         <div className="flex items-center">
                           <div
-                            className={`h-10 w-10 rounded-lg flex items-center justify-center mr-4 ${doc.status === 'verified' ? 'bg-green-100' :
-                              doc.status === 'requested' ? 'bg-purple-100' : 'bg-gray-100'
+                            className={`h-10 w-10 rounded-lg flex items-center justify-center mr-4 ${doc.verificationStatus === 'VERIFIED' ? 'bg-green-100' :
+                              doc.verificationStatus === 'REJECTED' ? 'bg-red-100' : 'bg-gray-100'
                               }`}
                           >
-                            <FileText className={`h-5 w-5 ${doc.status === 'verified' ? 'text-green-600' :
-                              doc.status === 'requested' ? 'text-purple-600' : 'text-gray-600'
+                            <FileText className={`h-5 w-5 ${doc.verificationStatus === 'VERIFIED' ? 'text-green-600' :
+                              doc.verificationStatus === 'REJECTED' ? 'text-red-600' : 'text-gray-600'
                               }`} />
                           </div>
                           <div>
-                            <p className="font-medium">{doc.name}</p>
+                            <p className="font-medium">{getDocumentTypeName(doc.documentType)}</p>
                             <p className="text-sm text-muted-foreground">
-                              Updated: {formatDate(doc.updatedAt)}
+                              Uploaded: {formatDate(doc.uploadDate)}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              File: {doc.fileName}
                             </p>
                           </div>
                         </div>
                         <div>
-                          {getStatusBadge(doc.status)}
-                          {doc.status === 'requested' && (
-                            <Button size="sm" className="ml-4 mt-2">
-                              Upload
-                            </Button>
+                          {getDocumentStatusBadge(doc.verificationStatus)}
+                          {doc.verificationStatus === 'REJECTED' && doc.rejectionReason && (
+                            <p className="text-sm text-red-600 mt-1">{doc.rejectionReason}</p>
                           )}
                         </div>
                       </div>
@@ -362,15 +380,15 @@ const ApplicationDetails = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {application.messages.length > 0 ? (
-                      application.messages.map((message) => (
-                        <div key={message.id} className={`flex ${message.from === "John Smith" ? "justify-end" : ""}`}>
-                          <div className={`flex max-w-[75%] ${message.from === "John Smith" ? "flex-row-reverse" : ""}`}>
-                            <Avatar className={`h-8 w-8 ${message.from === "John Smith" ? "ml-2" : "mr-2"}`}>
-                              <AvatarFallback>{message.from === "John Smith" ? "JS" : "OS"}</AvatarFallback>
+                    {mockMessages.length > 0 ? (
+                      mockMessages.map((message) => (
+                        <div key={message.id} className={`flex ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "justify-end" : ""}`}>
+                          <div className={`flex max-w-[75%] ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "flex-row-reverse" : ""}`}>
+                            <Avatar className={`h-8 w-8 ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "ml-2" : "mr-2"}`}>
+                              <AvatarFallback>{message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "JS" : "OS"}</AvatarFallback>
                             </Avatar>
                             <div>
-                              <div className={`p-3 rounded-lg ${message.from === "John Smith"
+                              <div className={`p-3 rounded-lg ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}`
                                 ? "bg-primary text-primary-foreground"
                                 : "bg-muted/20"
                                 }`}>
@@ -423,9 +441,9 @@ const ApplicationDetails = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {application.interviews.length > 0 ? (
+                  {mockInterviews.length > 0 ? (
                     <div className="space-y-8">
-                      {application.interviews.map((interview) => (
+                      {mockInterviews.map((interview) => (
                         <div key={interview.id} className="border rounded-lg p-6">
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-semibold">Visa Interview</h3>

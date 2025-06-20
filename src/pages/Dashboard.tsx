@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -9,73 +8,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Eye, Clock, CheckCircle, AlertCircle, RefreshCw, Bell, MessageCircle } from "lucide-react";
-import { VisaApplication } from "@/types";
+import { VisaApplicationResponse } from "@/types";
+import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
+import { useQuery } from "@tanstack/react-query";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("applications");
-  
-  // Mock data for demonstration
-  const [applications, setApplications] = useState<VisaApplication[]>([
-    {
-      id: "app-001",
-      userId: "user-123",
-      visaType: "Tourist Visa",
-      status: "under-review",
-      submissionDate: "2025-04-10T10:30:00Z",
-      personalInfo: {
-        firstName: "John",
-        lastName: "Doe",
-        dateOfBirth: "1985-06-15",
-        nationality: "United States",
-        passportNumber: "US12345678",
-        passportExpiryDate: "2028-01-01",
-        gender: "Male",
-        email: "john.doe@example.com",
-        phone: "+1234567890"
-      },
-      travelInfo: {
-        purpose: "Tourism",
-        entryDate: "2025-06-01",
-        exitDate: "2025-06-15",
-        accommodation: "Hotel Bujumbura"
-      },
-      documents: {
-        passport: "passport.pdf",
-        photo: "photo.jpg",
-        itinerary: "itinerary.pdf"
-      }
-    },
-    {
-      id: "app-002",
-      userId: "user-123",
-      visaType: "Business Visa",
-      status: "submitted",
-      submissionDate: "2025-05-05T14:20:00Z",
-      personalInfo: {
-        firstName: "John",
-        lastName: "Doe",
-        dateOfBirth: "1985-06-15",
-        nationality: "United States",
-        passportNumber: "US12345678",
-        passportExpiryDate: "2028-01-01",
-        gender: "Male",
-        email: "john.doe@example.com",
-        phone: "+1234567890"
-      },
-      travelInfo: {
-        purpose: "Business Meeting",
-        entryDate: "2025-07-10",
-        exitDate: "2025-07-20",
-        accommodation: "Kiriri Garden Hotel"
-      },
-      documents: {
-        passport: "passport.pdf",
-        photo: "photo.jpg",
-        invitation: "invitation_letter.pdf"
-      }
-    }
-  ]);
+
+  const { data: applications, isLoading, error } = useQuery({
+    queryKey: ['applications'],
+    queryFn: () => visaApplicationService.getUserApplications()
+  });
 
   // Format date function
   const formatDate = (dateString: string): string => {
@@ -90,15 +34,13 @@ const Dashboard = () => {
   // Get status badge
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case 'draft':
-        return <Badge variant="outline" className="bg-gray-100">Draft</Badge>;
-      case 'submitted':
+      case 'SUBMITTED':
         return <Badge variant="outline" className="bg-blue-100 text-blue-800">Submitted</Badge>;
-      case 'under-review':
+      case 'UNDER_REVIEW':
         return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
-      case 'approved':
+      case 'APPROVED':
         return <Badge variant="outline" className="bg-green-100 text-green-800">Approved</Badge>;
-      case 'rejected':
+      case 'REJECTED':
         return <Badge variant="outline" className="bg-red-100 text-red-800">Rejected</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
@@ -108,15 +50,13 @@ const Dashboard = () => {
   // Get status icon
   const getStatusIcon = (status: string) => {
     switch(status) {
-      case 'draft':
-        return <FileText className="h-5 w-5 text-gray-500" />;
-      case 'submitted':
+      case 'SUBMITTED':
         return <Clock className="h-5 w-5 text-blue-500" />;
-      case 'under-review':
+      case 'UNDER_REVIEW':
         return <RefreshCw className="h-5 w-5 text-yellow-500" />;
-      case 'approved':
+      case 'APPROVED':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'rejected':
+      case 'REJECTED':
         return <AlertCircle className="h-5 w-5 text-red-500" />;
       default:
         return <FileText className="h-5 w-5" />;
@@ -171,7 +111,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar isAuthenticated={true} />
+      <Navbar />
       
       <div className="flex-1 bg-gray-50">
         <div className="container mx-auto px-4 py-8">
@@ -197,7 +137,7 @@ const Dashboard = () => {
                 <CardDescription>Currently being processed</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">2</div>
+                <div className="text-3xl font-bold">{applications?.length || 0}</div>
               </CardContent>
             </Card>
             
@@ -232,12 +172,17 @@ const Dashboard = () => {
             
             <TabsContent value="applications">
               <div className="grid grid-cols-1 gap-6">
-                {applications.map((app) => (
-                  <Card key={app.id} className="border-l-4 hover:shadow-md transition-shadow duration-200" style={{ borderLeftColor: app.status === 'approved' ? '#1EB53A' : app.status === 'under-review' ? '#f59e0b' : '#0052A5' }}>
+                {!applications && (
+                  <div className="text-center text-gray-500">
+                    No applications found
+                  </div>
+                )}  
+                {applications && applications.map((app) => (
+                  <Card key={app.id} className="border-l-4 hover:shadow-md transition-shadow duration-200" style={{ borderLeftColor: app.status === 'APPROVED' ? '#1EB53A' : app.status === 'UNDER_REVIEW' ? '#f59e0b' : '#0052A5' }}>
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle>{app.visaType}</CardTitle>
+                          <CardTitle>{app.visaType.name}</CardTitle>  
                           <CardDescription>
                             Submitted on {formatDate(app.submissionDate)}
                           </CardDescription>

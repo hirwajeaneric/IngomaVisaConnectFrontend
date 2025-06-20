@@ -4,6 +4,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, auth } from '@/configs/firebase';
 import { signInWithCustomToken } from 'firebase/auth';
 import { UploadProgressCallback } from '@/hooks/useVisaApplication';
+import { VisaApplicationResponse } from '@/types';
 
 export interface PersonalInfo {
   firstName: string;
@@ -133,31 +134,31 @@ export const visaApplicationService = {
   },
 
   // Get application by ID
-  getApplicationById: async (applicationId: string): Promise<ApiResponse<VisaApplication>> => {
+  getApplicationById: async (applicationId: string) => {
     let response;
     try {
-      response = await apiClient.get<ApiResponse<VisaApplication>>(`/applications/${applicationId}`, {
+      response = await apiClient.get(`/applications/${applicationId}`, {
         headers: getAuthHeader()
       });
     } catch (error: any) {
       const { message } = error.response.data;
       throw new Error(message);
     }
-    return response.data;
+    return response.data.data;
   },
 
   // Get all applications for current user
-  getUserApplications: async (): Promise<ApiResponse<VisaApplication[]>> => {
+  getUserApplications: async () => {
     let response;
     try {
-      response = await apiClient.get<ApiResponse<VisaApplication[]>>('/applications', {
+      response = await apiClient.get('/applications', {
         headers: getAuthHeader()
       });
     } catch (error: any) {
       const { message } = error.response.data;
       throw new Error(message);
     }
-    return response.data;
+    return response.data.data;
   },
 
   // Update personal information

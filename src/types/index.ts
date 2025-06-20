@@ -24,37 +24,111 @@ export interface VisaType {
   requirements: string[];
 }
 
-export interface VisaApplication {
-  id: string;
-  userId: string;
-  visaType: string;
-  status: 'draft' | 'submitted' | 'under-review' | 'approved' | 'rejected';
-  submissionDate: string;
-  personalInfo: {
-    firstName: string;
-    lastName: string;
-    dateOfBirth: string;
-    nationality: string;
-    passportNumber: string;
-    passportExpiryDate: string;
-    gender: string;
-    email: string;
-    phone: string;
-  };
-  travelInfo: {
-    purpose: string;
-    entryDate: string;
-    exitDate: string;
-    accommodation: string;
-  };
-  documents: {
-    passport: string;
-    photo: string;
-    itinerary?: string;
-    invitation?: string;
-    [key: string]: string | undefined;
-  };
+export interface VisaApplicationResponse {
+  success: boolean
+  message: string
+  data: VisaApplication[]
 }
+
+export interface VisaApplication {
+  id: string
+  applicationNumber: string
+  status: string
+  rejectionReason?: string
+  visaType: VisaType
+  personalInfo?: PersonalInfo
+  travelInfo?: TravelInfo
+  documents: Document[]
+  payment?: Payment
+  fundingSource?: string
+  monthlyIncome?: number
+  submissionDate?: string
+}
+
+export interface VisaType {
+  id: string
+  name: string
+  slug: string
+  description: string
+  price: number
+  processingTime: string
+  duration: string
+  requirements: string[]
+  eligibleCountries: string[]
+  coverImage: string
+  createdAt: string
+  updatedAt: string
+  isActive: boolean
+}
+
+export interface PersonalInfo {
+  id: string
+  userId: string
+  firstName: string
+  lastName: string
+  dateOfBirth: string
+  nationality: string
+  passportNumber: string
+  passportIssueDate: string
+  passportExpiryDate: string
+  passportIssuingCountry: string
+  gender: string
+  email: string
+  phone: string
+  maritalStatus: string
+  address: string
+  currentAddress?: string
+  occupation: string
+  employerDetails?: string
+  city: string
+  country: string
+  postalCode: string
+}
+
+export interface TravelInfo {
+  id: string
+  purposeOfTravel: string
+  entryDate: string
+  exitDate: string
+  previousVisits: boolean
+  intendedEntryDate: string
+  intendedExitDate: string
+  portOfEntry: string
+  accommodationDetails: string
+  travelItinerary: string
+  previousVisitDetails: string
+  hostDetails: string
+  finalDestination: string
+  countriesVisitedOfAfterBurundi: string
+}
+
+export interface Document {
+  id: string
+  applicationId: string
+  documentType: string
+  fileName: string
+  filePath: string
+  fileSize: number
+  uploadDate: string
+  verificationStatus: string
+  verifiedBy?: string
+  verifiedAt?: string
+  rejectionReason?: string
+}
+
+export interface Payment {
+  id: string
+  userId: string
+  amount: number
+  currency: string
+  paymentStatus: string
+  stripePaymentId: string
+  createdAt: string
+  updatedAt: string
+  refundStatus?: string
+  refundReason?: string
+}
+
 
 // Admin-related types
 export interface AdminUser extends User {
