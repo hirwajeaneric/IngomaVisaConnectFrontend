@@ -144,6 +144,7 @@ export const visaApplicationService = {
       const { message } = error.response.data;
       throw new Error(message);
     }
+    console.log(response.data);
     return response.data.data;
   },
 
@@ -152,6 +153,20 @@ export const visaApplicationService = {
     let response;
     try {
       response = await apiClient.get('/applications', {
+        headers: getAuthHeader()
+      });
+    } catch (error: any) {
+      const { message } = error.response.data;
+      throw new Error(message);
+    }
+    return response.data.data;
+  },
+
+  // Get all applications
+  getAllApplications: async () => {
+    let response;
+    try {
+      response = await apiClient.get('/applications/all', {
         headers: getAuthHeader()
       });
     } catch (error: any) {

@@ -41,6 +41,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { getStatusBadge } from "@/components/widgets";
+import { formatDate, formatDateTime } from "@/lib/utils";
+import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
+import { useQuery } from "@tanstack/react-query";
 
 const AdminApplicationDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,128 +60,98 @@ const AdminApplicationDetail = () => {
   const [requestDocumentDetails, setRequestDocumentDetails] = useState("");
   const [newMessage, setNewMessage] = useState("");
 
-  // Mock application data
-  const application = {
-    id: id || "APP-2354",
-    status: "under-review",
-    submissionDate: "2025-05-14T09:45:00Z",
-    lastUpdated: "2025-05-15T14:20:00Z",
-    assignedTo: "Officer Sarah Nkurunziza",
-    visaType: "Tourist",
-    applicant: {
-      fullName: "John Smith",
-      dateOfBirth: "1985-06-15",
-      gender: "Male",
-      nationality: "United States",
-      residenceCountry: "United States",
-      passportNumber: "US12345678",
-      passportIssueDate: "2020-03-10",
-      passportExpiryDate: "2030-03-09",
-      email: "john.smith@example.com",
-      phone: "+1234567890",
-      occupation: "Software Engineer",
-      employer: "Tech Solutions Inc.",
+  const { data: applicationData, isLoading, error } = useQuery({
+    queryKey: ["application", id],
+    queryFn: () => visaApplicationService.getApplicationById(id as string),
+  });
+
+  const passportPhoto = applicationData?.documents.find(doc => doc.documentType === "passportCopy");
+
+  const application = applicationData;
+
+  // Mock data for features that don't have API data yet
+  const mockMessages = [
+    {
+      id: "msg-1",
+      date: "2025-05-15 15:30",
+      from: "Officer Sarah Nkurunziza",
+      content: "Hello Mr. Smith, we require additional information about your planned activities in Burundi. Could you please provide a detailed itinerary?",
+      read: true,
     },
-    travelInfo: {
-      purposeOfVisit: "Tourism and wildlife photography",
-      entryDate: "2025-06-20",
-      exitDate: "2025-07-05",
-      accommodation: "Kiriri Garden Hotel, Bujumbura",
-      previousVisits: "No",
-      visitedCountries: "Kenya, Rwanda, Tanzania",
+    {
+      id: "msg-2",
+      date: "2025-05-15 16:45",
+      from: "John Smith",
+      content: "Hello Officer, thank you for your message. I plan to visit Bujumbura for 3 days, then travel to Gitega for 2 days, followed by a visit to Kibira National Park for wildlife photography. I'll send a detailed itinerary document shortly.",
+      read: true,
     },
-    financialInfo: {
-      fundingSource: "Self",
-      monthlyIncome: "$8,500",
-    },
-    documents: [
-      { name: "Passport Copy", type: "pdf", size: "1.2 MB", verified: true },
-      { name: "Photo", type: "jpeg", size: "320 KB", verified: true },
-      { name: "Flight Itinerary", type: "pdf", size: "580 KB", verified: false },
-      { name: "Hotel Reservation", type: "pdf", size: "420 KB", verified: false },
-      { name: "Bank Statement", type: "pdf", size: "890 KB", verified: false },
-      { name: "Travel Insurance", type: "pdf", size: "760 KB", verified: false },
-      { name: "Yellow Fever Certificate", type: "pdf", size: "450 KB", verified: false },
-    ],
-    history: [
-      { 
-        date: "2025-05-15 14:20", 
-        action: "Application status updated to 'Under Review'", 
-        by: "System" 
-      },
-      { 
-        date: "2025-05-14 09:45", 
-        action: "Application submitted", 
-        by: "Applicant" 
-      },
-      { 
-        date: "2025-05-14 09:30", 
-        action: "Payment confirmed", 
-        by: "Payment System" 
-      },
-    ],
-    messages: [
-      {
-        id: "msg-1",
-        date: "2025-05-15 15:30",
-        from: "Officer Sarah Nkurunziza",
-        content: "Hello Mr. Smith, we require additional information about your planned activities in Burundi. Could you please provide a detailed itinerary?",
-        read: true,
-      },
-      {
-        id: "msg-2",
-        date: "2025-05-15 16:45",
-        from: "John Smith",
-        content: "Hello Officer, thank you for your message. I plan to visit Bujumbura for 3 days, then travel to Gitega for 2 days, followed by a visit to Kibira National Park for wildlife photography. I'll send a detailed itinerary document shortly.",
-        read: true,
-      },
-    ],
-    payment: {
-      id: "PAY-5678",
-      amount: "$90.00",
-      currency: "USD",
-      date: "2025-05-14 09:30",
-      method: "Credit Card",
-      status: "Paid",
-    },
+  ];
+
+  const getDocumentTypeName = (type: string) => {
+    switch (type) {
+      case "passportCopy":
+        return "Passport Copy";
+      case "photos":
+        return "Passport Photos";
+      case "yellowFeverCertificate":
+        return "Yellow Fever Certificate";
+      case "travelInsurance":
+        return "Travel Insurance";
+      case "bankStatement":
+        return "Bank Statement";
+      case "employmentLetter":
+        return "Employment Letter";
+      case "invitationLetter":
+        return "Invitation Letter";
+      default:
+        return type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const getDocumentStatusBadge = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return <Badge variant="outline" className="bg-gray-100">Pending</Badge>;
+      case "VERIFIED":
+        return <Badge className="bg-green-100 text-green-800">Verified</Badge>;
+      case "REJECTED":
+        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusMap: { [key: string]: { color: string; label: string } } = {
-      "pending": { color: "bg-blue-100 text-blue-800", label: "Pending" },
-      "under-review": { color: "bg-amber-100 text-amber-800", label: "Under Review" },
-      "document-requested": { color: "bg-purple-100 text-purple-800", label: "Documents Requested" },
-      "interview-scheduled": { color: "bg-indigo-100 text-indigo-800", label: "Interview Scheduled" },
-      "approved": { color: "bg-green-100 text-green-800", label: "Approved" },
-      "rejected": { color: "bg-red-100 text-red-800", label: "Rejected" },
-    };
-
-    const { color, label } = statusMap[status] || { color: "bg-gray-100 text-gray-800", label: status };
-
+  if (isLoading) {
     return (
-      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${color}`}>
-        {label}
-      </span>
+      <AdminLayout title={`Application ${id}`} subtitle="Review and process visa application">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-2">Loading application details...</span>
+        </div>
+      </AdminLayout>
     );
-  };
+  }
+
+  if (error || !application) {
+    return (
+      <AdminLayout title={`Application ${id}`} subtitle="Review and process visa application">
+        <div className="text-center text-red-600">
+          <p>Failed to load application details</p>
+          <Button onClick={() => window.location.reload()} className="mt-2">
+            Try Again
+          </Button>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   const handleUpdateStatus = () => {
     // In a real implementation, this would call an API to update the status
@@ -207,7 +181,7 @@ const AdminApplicationDetail = () => {
   const handleExportPDF = async () => {
     try {
       const reportData = {
-        title: `Visa Application - ${application.applicant.fullName}`,
+        title: `Visa Application - ${application.personalInfo.firstName} ${application.personalInfo.lastName}`,
         dateRange: {
           from: formatDate(application.submissionDate),
           to: 'Present',
@@ -253,7 +227,7 @@ const AdminApplicationDetail = () => {
     
     // Update the document status in the UI
     application.documents = application.documents.map(doc => 
-      doc.name === selectedDocument.name ? {...doc, verified: true} : doc
+      doc.name === selectedDocument.name ? {...doc, verificationStatus: 'VERIFIED'} : doc
     );
     
     setSelectedDocument(null);
@@ -307,21 +281,8 @@ const AdminApplicationDetail = () => {
     // In a real implementation, this would call an API to send a message
     console.log(`Sending message: ${newMessage}`);
     
-    // Add the new message to the conversation
-    application.messages.unshift({
-      id: `msg-${application.messages.length + 1}`,
-      date: new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      from: application.assignedTo,
-      content: newMessage,
-      read: false,
-    });
-    
+    // Add the new message to the conversation (in a real app, this would be handled by the API)
+    // For now, we'll just show a toast since we're using mock data
     toast({
       title: "Message Sent",
       description: "Your message has been sent to the applicant.",
@@ -331,7 +292,7 @@ const AdminApplicationDetail = () => {
   };
 
   return (
-    <AdminLayout title={`Application ${id}`} subtitle="Review and process visa application">
+    <AdminLayout title={`Application ${application.applicationNumber}`} subtitle="Review and process visa application">
       <div className="space-y-6">
         {/* Application Header */}
         <Card>
@@ -339,11 +300,11 @@ const AdminApplicationDetail = () => {
             <div className="flex flex-col md:flex-row justify-between md:items-center">
               <div>
                 <div className="flex items-center space-x-2">
-                  <h2 className="text-2xl font-bold">{application.applicant.fullName}</h2>
+                  <h2 className="text-2xl font-bold">{application.personalInfo.firstName} {application.personalInfo.lastName}</h2>
                   {getStatusBadge(application.status)}
                 </div>
                 <p className="text-gray-500 mt-1">
-                  {application.visaType} Visa Application • {application.id}
+                  {application.visaType.name} Visa Application • {application.applicationNumber}
                 </p>
               </div>
               
@@ -375,16 +336,16 @@ const AdminApplicationDetail = () => {
               <div className="flex items-center">
                 <Clock className="h-5 w-5 text-muted-foreground mr-2" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Last update</p>
-                  <p className="font-medium">{formatDateTime(application.lastUpdated)}</p>
+                  <p className="text-sm text-muted-foreground">Processing time</p>
+                  <p className="font-medium">{application.visaType.processingTime}</p>
                 </div>
               </div>
               
               <div className="flex items-center">
                 <User className="h-5 w-5 text-muted-foreground mr-2" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Assigned to</p>
-                  <p className="font-medium">{application.assignedTo}</p>
+                  <p className="text-sm text-muted-foreground">Visa duration</p>
+                  <p className="font-medium">{application.visaType.duration}</p>
                 </div>
               </div>
             </div>
@@ -399,7 +360,6 @@ const AdminApplicationDetail = () => {
             <TabsTrigger value="travel">Travel Info</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="payment">Payment</TabsTrigger>
           </TabsList>
           
@@ -475,19 +435,19 @@ const AdminApplicationDetail = () => {
                   <dl className="space-y-4">
                     <div>
                       <dt className="text-sm font-medium text-muted-foreground">Applicant</dt>
-                      <dd className="mt-1 text-sm">{application.applicant.fullName}</dd>
+                      <dd className="mt-1 text-sm">{application.personalInfo.firstName} {application.personalInfo.lastName}</dd>
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-muted-foreground">Nationality</dt>
-                      <dd className="mt-1 text-sm">{application.applicant.nationality}</dd>
+                      <dd className="mt-1 text-sm">{application.personalInfo.nationality}</dd>
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-muted-foreground">Passport</dt>
-                      <dd className="mt-1 text-sm">{application.applicant.passportNumber}</dd>
+                      <dd className="mt-1 text-sm">{application.personalInfo.passportNumber}</dd>
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-muted-foreground">Visit Purpose</dt>
-                      <dd className="mt-1 text-sm">{application.travelInfo.purposeOfVisit}</dd>
+                      <dd className="mt-1 text-sm">{application.travelInfo.purposeOfTravel}</dd>
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-muted-foreground">Travel Dates</dt>
@@ -499,8 +459,8 @@ const AdminApplicationDetail = () => {
                       <dt className="text-sm font-medium text-muted-foreground">Payment</dt>
                       <dd className="mt-1 text-sm">
                         <Badge variant="outline" className="bg-green-50 text-green-700">
-                          {application.payment.status}
-                        </Badge> {application.payment.amount}
+                          {application.payment.paymentStatus}
+                        </Badge> ${application.payment.amount} {application.payment.currency}
                       </dd>
                     </div>
                   </dl>
@@ -519,29 +479,6 @@ const AdminApplicationDetail = () => {
               </Card>
             </div>
             
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {application.history.map((item, index) => (
-                    <div key={index} className="flex items-start">
-                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-3 mt-0.5">
-                        <Clock className="h-3 w-3 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm">{item.action}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {item.date} • {item.by}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
           
           {/* Applicant Tab */}
@@ -554,10 +491,10 @@ const AdminApplicationDetail = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-1">
                     <div className="mb-6">
-                      <AspectRatio ratio={3/4} className="border rounded-lg overflow-hidden bg-muted">
+                      <AspectRatio ratio={1/1} className="border rounded-lg overflow-hidden bg-muted">
                         <img 
-                          src="/placeholder.svg"
-                          alt={`${application.applicant.fullName}'s photo`} 
+                          src={passportPhoto?.filePath || ''}
+                          alt={`${application.personalInfo.firstName} ${application.personalInfo.lastName}'s photo`} 
                           className="object-cover"
                         />
                       </AspectRatio>
@@ -566,15 +503,15 @@ const AdminApplicationDetail = () => {
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Passport Number</p>
-                        <p className="font-medium">{application.applicant.passportNumber}</p>
+                        <p className="font-medium">{application.personalInfo.passportNumber}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Passport Issue Date</p>
-                        <p>{formatDate(application.applicant.passportIssueDate)}</p>
+                        <p>{formatDate(application.personalInfo.passportIssueDate)}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Passport Expiry Date</p>
-                        <p>{formatDate(application.applicant.passportExpiryDate)}</p>
+                        <p>{formatDate(application.personalInfo.passportExpiryDate)}</p>
                       </div>
                     </div>
                   </div>
@@ -583,39 +520,51 @@ const AdminApplicationDetail = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Full Name</p>
-                        <p className="font-medium">{application.applicant.fullName}</p>
+                        <p className="font-medium">{application.personalInfo.firstName} {application.personalInfo.lastName}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Date of Birth</p>
-                        <p>{formatDate(application.applicant.dateOfBirth)}</p>
+                        <p>{formatDate(application.personalInfo.dateOfBirth)}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Gender</p>
-                        <p>{application.applicant.gender}</p>
+                        <p>{application.personalInfo.gender}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Nationality</p>
-                        <p>{application.applicant.nationality}</p>
+                        <p>{application.personalInfo.nationality}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Country of Residence</p>
-                        <p>{application.applicant.residenceCountry}</p>
+                        <p>{application.personalInfo.country}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Email</p>
-                        <p>{application.applicant.email}</p>
+                        <p>{application.personalInfo.email}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Phone Number</p>
-                        <p>{application.applicant.phone}</p>
+                        <p>{application.personalInfo.phone}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Occupation</p>
-                        <p>{application.applicant.occupation}</p>
+                        <p>{application.personalInfo.occupation}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Employer</p>
-                        <p>{application.applicant.employer}</p>
+                        <p>{application.personalInfo.employerDetails || 'Not specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Address</p>
+                        <p>{application.personalInfo.address}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">City</p>
+                        <p>{application.personalInfo.city}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Marital Status</p>
+                        <p className="capitalize">{application.personalInfo.maritalStatus}</p>
                       </div>
                     </div>
                     
@@ -626,11 +575,11 @@ const AdminApplicationDetail = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Source of Funding</p>
-                          <p>{application.financialInfo.fundingSource}</p>
+                          <p className="capitalize">{application.fundingSource}</p>
                         </div>
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Monthly Income</p>
-                          <p>{application.financialInfo.monthlyIncome}</p>
+                          <p>${application.monthlyIncome}</p>
                         </div>
                       </div>
                     </div>
@@ -661,7 +610,7 @@ const AdminApplicationDetail = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Purpose of Visit</p>
-                    <p className="mt-1">{application.travelInfo.purposeOfVisit}</p>
+                    <p className="mt-1">{application.travelInfo.purposeOfTravel}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Entry Date</p>
@@ -680,16 +629,24 @@ const AdminApplicationDetail = () => {
                     </p>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="text-sm font-medium text-muted-foreground">Accommodation in Burundi</p>
-                    <p className="mt-1">{application.travelInfo.accommodation}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Accommodation Details</p>
+                    <p className="mt-1">{application.travelInfo.accommodationDetails}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Previous Visits to Burundi</p>
-                    <p className="mt-1">{application.travelInfo.previousVisits}</p>
+                    <p className="mt-1">{application.travelInfo.previousVisits ? 'Yes' : 'No'}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Countries Visited in Last 6 Months</p>
-                    <p className="mt-1">{application.travelInfo.visitedCountries}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Port of Entry</p>
+                    <p className="mt-1">{application.travelInfo.portOfEntry}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Travel Itinerary</p>
+                    <p className="mt-1">{application.travelInfo.travelItinerary}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Host Details</p>
+                    <p className="mt-1">{application.travelInfo.hostDetails}</p>
                   </div>
                 </div>
               </CardContent>
@@ -704,19 +661,21 @@ const AdminApplicationDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {application.documents.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
+                  {application.documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center mr-3">
                           <FileText className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium">{doc.name}</p>
-                          <p className="text-xs text-muted-foreground">{doc.type.toUpperCase()} • {doc.size}</p>
+                          <p className="font-medium">{getDocumentTypeName(doc.documentType)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {doc.fileName} • {formatFileSize(doc.fileSize)} • {formatDate(doc.uploadDate)}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        {doc.verified ? (
+                        {doc.verificationStatus === 'VERIFIED' ? (
                           <Badge variant="outline" className="bg-green-50 text-green-700">
                             Verified
                           </Badge>
@@ -726,7 +685,12 @@ const AdminApplicationDetail = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                onClick={() => setSelectedDocument(doc)}
+                                onClick={() => setSelectedDocument({
+                                  name: getDocumentTypeName(doc.documentType),
+                                  type: doc.fileName.split('.').pop() || 'unknown',
+                                  size: formatFileSize(doc.fileSize),
+                                  verified: doc.verificationStatus === 'VERIFIED'
+                                })}
                               >
                                 Verify
                               </Button>
@@ -735,7 +699,7 @@ const AdminApplicationDetail = () => {
                               <DialogHeader>
                                 <DialogTitle>Verify Document</DialogTitle>
                                 <DialogDescription>
-                                  Review and verify "{doc.name}" or reject it with a reason.
+                                  Review and verify "{getDocumentTypeName(doc.documentType)}" or reject it with a reason.
                                 </DialogDescription>
                               </DialogHeader>
                               
@@ -743,13 +707,15 @@ const AdminApplicationDetail = () => {
                                 <div className="flex items-center space-x-4">
                                   <FileText className="h-8 w-8 text-primary" />
                                   <div>
-                                    <p className="font-medium">{doc.name}</p>
-                                    <p className="text-sm text-muted-foreground">{doc.type.toUpperCase()} • {doc.size}</p>
+                                    <p className="font-medium">{getDocumentTypeName(doc.documentType)}</p>
+                                    <p className="text-sm text-muted-foreground">{doc.fileName} • {formatFileSize(doc.fileSize)}</p>
                                   </div>
                                 </div>
                                 
                                 <div className="border rounded-md p-4">
                                   <p className="text-sm">Document preview would appear here in a real application.</p>
+                                  <p className="text-sm text-muted-foreground mt-2">File: {doc.fileName}</p>
+                                  <p className="text-sm text-muted-foreground">Size: {formatFileSize(doc.fileSize)}</p>
                                 </div>
                                 
                                 <Textarea
@@ -779,7 +745,7 @@ const AdminApplicationDetail = () => {
                             </DialogContent>
                           </Dialog>
                         )}
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" onClick={() => window.open(doc.filePath, '_blank')}>
                           <Download className="h-4 w-4" />
                         </Button>
                       </div>
@@ -850,22 +816,23 @@ const AdminApplicationDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {application.messages.map((message) => (
-                    <div key={message.id} className={`flex ${message.from === "John Smith" ? "justify-end" : ""}`}>
-                      <div className={`flex max-w-[75%] ${message.from === "John Smith" ? "flex-row-reverse" : ""}`}>
-                        <Avatar className={`h-8 w-8 ${message.from === "John Smith" ? "ml-3" : "mr-3"}`}>
+                  {mockMessages.map((message) => (
+                    <div key={message.id} className={`flex ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "justify-end" : ""}`}>
+                      <div className={`flex max-w-[75%] ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "flex-row-reverse" : ""}`}>
+                        <Avatar className={`h-8 w-8 ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "ml-3" : "mr-3"}`}>
                           <AvatarImage 
-                            src={message.from === "John Smith" ? "/placeholder.svg" : "/placeholder.svg"} 
+                            src={message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "/placeholder.svg" : "/placeholder.svg"} 
                             alt={message.from}
                           />
                           <AvatarFallback>
-                            {message.from === "John Smith" ? "JS" : "SN"}
+                            {message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? 
+                              `${application.personalInfo.firstName[0]}${application.personalInfo.lastName[0]}` : "SN"}
                           </AvatarFallback>
                         </Avatar>
                         
                         <div>
                           <div className={`p-3 rounded-lg ${
-                            message.from === "John Smith" 
+                            message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` 
                             ? "bg-primary text-white" 
                             : "bg-muted"
                           }`}>
@@ -906,30 +873,6 @@ const AdminApplicationDetail = () => {
             </Card>
           </TabsContent>
           
-          {/* History Tab */}
-          <TabsContent value="history">
-            <Card>
-              <CardHeader>
-                <CardTitle>Application History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="relative pl-6 border-l border-gray-200">
-                  {application.history.map((item, index) => (
-                    <div key={index} className="mb-8 relative">
-                      <div className="absolute -left-[21px] h-6 w-6 rounded-full bg-primary flex items-center justify-center">
-                        <div className="h-3 w-3 rounded-full bg-white" />
-                      </div>
-                      <p className="font-medium">{item.action}</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {item.date} • {item.by}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
           {/* Payment Tab */}
           <TabsContent value="payment">
             <Card>
@@ -945,11 +888,11 @@ const AdminApplicationDetail = () => {
                       </div>
                       <div>
                         <p className="font-medium">Payment ID: {application.payment.id}</p>
-                        <p className="text-sm text-muted-foreground">{application.payment.date}</p>
+                        <p className="text-sm text-muted-foreground">{formatDateTime(application.payment.createdAt)}</p>
                       </div>
                     </div>
                     <Badge variant="outline" className="bg-green-50 text-green-700">
-                      {application.payment.status}
+                      {application.payment.paymentStatus}
                     </Badge>
                   </div>
                 </div>
@@ -957,11 +900,11 @@ const AdminApplicationDetail = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Amount</p>
-                    <p className="font-medium text-xl mt-1">{application.payment.amount}</p>
+                    <p className="font-medium text-xl mt-1">${application.payment.amount} {application.payment.currency}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Payment Method</p>
-                    <p className="mt-1">{application.payment.method}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Stripe Payment ID</p>
+                    <p className="mt-1 text-sm font-mono">{application.payment.stripePaymentId}</p>
                   </div>
                 </div>
                 
@@ -973,7 +916,7 @@ const AdminApplicationDetail = () => {
                     <tbody className="divide-y divide-muted">
                       <tr>
                         <td className="py-3 text-muted-foreground">Visa Application Fee</td>
-                        <td className="py-3 text-right">{application.payment.amount}</td>
+                        <td className="py-3 text-right">${application.payment.amount} {application.payment.currency}</td>
                       </tr>
                       <tr>
                         <td className="py-3 text-muted-foreground">Processing Fee</td>
@@ -985,7 +928,7 @@ const AdminApplicationDetail = () => {
                       </tr>
                       <tr>
                         <td className="py-3 font-medium">Total</td>
-                        <td className="py-3 text-right font-medium">{application.payment.amount}</td>
+                        <td className="py-3 text-right font-medium">${application.payment.amount} {application.payment.currency}</td>
                       </tr>
                     </tbody>
                   </table>

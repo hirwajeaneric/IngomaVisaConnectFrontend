@@ -132,10 +132,6 @@ const AdminUsers = () => {
       accessorKey: "createdAt",
       header: "Created At",
     },
-    // {
-    //   accessorKey: "lastActive",
-    //   header: "Last Active",
-    // },
   ];
 
   if (loading) {
