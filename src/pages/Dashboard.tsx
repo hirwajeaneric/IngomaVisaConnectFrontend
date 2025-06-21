@@ -2,15 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import UserProfile from "@/components/profile/UserProfile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Eye, Clock, CheckCircle, AlertCircle, RefreshCw, Bell, MessageCircle } from "lucide-react";
-import { VisaApplicationResponse } from "@/types";
+import { FileText, Eye, Clock, CheckCircle, AlertCircle, RefreshCw, MessageCircle } from "lucide-react";
 import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
 import { useQuery } from "@tanstack/react-query";
+import { formatDate } from "@/lib/utils";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -20,16 +19,6 @@ const Dashboard = () => {
     queryKey: ['applications'],
     queryFn: () => visaApplicationService.getUserApplications()
   });
-
-  // Format date function
-  const formatDate = (dateString: string): string => {
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
 
   // Get status badge
   const getStatusBadge = (status: string) => {
@@ -62,28 +51,6 @@ const Dashboard = () => {
         return <FileText className="h-5 w-5" />;
     }
   };
-
-  // Mock notifications
-  const notifications = [
-    {
-      id: "notif-1",
-      message: "Your Tourist Visa application is under review.",
-      date: "2025-05-12T09:45:00Z",
-      read: false
-    },
-    {
-      id: "notif-2",
-      message: "Please upload additional documents for your Business Visa application.",
-      date: "2025-05-10T15:30:00Z",
-      read: true
-    },
-    {
-      id: "notif-3",
-      message: "Your application fee payment has been confirmed.",
-      date: "2025-05-05T11:20:00Z",
-      read: true
-    }
-  ];
 
   // Mock messages
   const messages = [
@@ -130,7 +97,7 @@ const Dashboard = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Active Applications</CardTitle>
@@ -150,24 +117,12 @@ const Dashboard = () => {
                 <div className="text-3xl font-bold">1</div>
               </CardContent>
             </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Notifications</CardTitle>
-                <CardDescription>Application updates</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">1</div>
-              </CardContent>
-            </Card>
           </div>
           
           <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-6">
               <TabsTrigger value="applications">Applications</TabsTrigger>
-              <TabsTrigger value="notifications">Notifications</TabsTrigger>
               <TabsTrigger value="messages">Messages</TabsTrigger>
-              <TabsTrigger value="profile">Profile</TabsTrigger>
             </TabsList>
             
             <TabsContent value="applications">
@@ -239,37 +194,6 @@ const Dashboard = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="notifications">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl">Notifications</CardTitle>
-                  <CardDescription>Your latest application updates</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {notifications.map((notification) => (
-                      <div 
-                        key={notification.id}
-                        className={`p-4 border rounded-md ${notification.read ? 'bg-white' : 'bg-green-50'}`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <Bell className={`h-5 w-5 mt-0.5 ${notification.read ? 'text-gray-400' : 'text-secondary'}`} />
-                          <div className="flex-1">
-                            <p className={`${notification.read ? 'font-normal' : 'font-medium'}`}>
-                              {notification.message}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {formatDate(notification.date)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
             <TabsContent value="messages">
               <Card>
                 <CardHeader>
@@ -318,10 +242,6 @@ const Dashboard = () => {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-            
-            <TabsContent value="profile">
-              <UserProfile />
             </TabsContent>
           </Tabs>
         </div>

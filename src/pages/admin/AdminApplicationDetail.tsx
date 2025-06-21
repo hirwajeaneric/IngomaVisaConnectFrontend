@@ -43,24 +43,6 @@ const AdminApplicationDetail = () => {
   const passportPhoto = applicationData?.documents.find(doc => doc.documentType === "passportCopy");
   const application = applicationData;
 
-  // Mock data for features that don't have API data yet
-  const mockMessages = [
-    {
-      id: "msg-1",
-      date: "2025-05-15 15:30",
-      from: "Officer Sarah Nkurunziza",
-      content: "Hello Mr. Smith, we require additional information about your planned activities in Burundi. Could you please provide a detailed itinerary?",
-      read: true,
-    },
-    {
-      id: "msg-2",
-      date: "2025-05-15 16:45",
-      from: "John Smith",
-      content: "Hello Officer, thank you for your message. I plan to visit Bujumbura for 3 days, then travel to Gitega for 2 days, followed by a visit to Kibira National Park for wildlife photography. I'll send a detailed itinerary document shortly.",
-      read: true,
-    },
-  ];
-
   if (isLoading) {
     return (
       <AdminLayout title={`Application ${id}`} subtitle="Review and process visa application">
@@ -210,8 +192,9 @@ const AdminApplicationDetail = () => {
           {/* Messages Tab */}
           <TabsContent value="messages">
             <MessagesTab 
-              messages={mockMessages}
+              applicationId={application.id}
               applicantName={applicantName}
+              applicantId={application.personalInfo.userId}
             />
           </TabsContent>
           

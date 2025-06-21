@@ -1,5 +1,5 @@
 export interface CreateMessageRequest {
-    senderId: string
+    senderId?: string
     recipientId: string
     applicationId: string
     content: string

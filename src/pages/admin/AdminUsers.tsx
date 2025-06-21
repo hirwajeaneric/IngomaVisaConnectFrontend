@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserPlus, Loader2 } from "lucide-react";
+import { UserPlus, Loader2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { User, userService } from "@/lib/api/services/user.service";
 import { DataTable } from "@/components/ui/data-table";
@@ -19,6 +19,7 @@ const AdminUsers = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -49,12 +50,12 @@ const AdminUsers = () => {
         department: formData.get('department') as string,
         title: formData.get('title') as string,
       });
-      
+
       toast({
         title: "Success",
         description: "User created successfully",
       });
-      
+
       fetchUsers();
     } catch (error) {
       toast({
@@ -91,7 +92,7 @@ const AdminUsers = () => {
           OFFICER: 'bg-secondary',
           APPLICANT: 'bg-blue-500'
         };
-        
+
         const roleLabels = {
           ADMIN: 'Administrator',
           OFFICER: 'Officer',
@@ -145,8 +146,8 @@ const AdminUsers = () => {
   }
 
   return (
-    <AdminLayout 
-      title="User Management" 
+    <AdminLayout
+      title="User Management"
       subtitle="Manage system users and permissions"
     >
       <div className="space-y-6">
@@ -157,7 +158,7 @@ const AdminUsers = () => {
               Showing {users.length} users
             </p>
           </div>
-          
+
           <Dialog>
             <DialogTrigger asChild>
               <Button className="bg-secondary hover:bg-secondary/90">
@@ -172,7 +173,7 @@ const AdminUsers = () => {
                   Create a new user account in the system.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <form className="space-y-4 py-4" onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
@@ -184,7 +185,7 @@ const AdminUsers = () => {
                   <Label htmlFor="name">Full Name</Label>
                   <Input id="name" name="name" required />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <Input id="email" name="email" type="email" required />
@@ -192,19 +193,24 @@ const AdminUsers = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" name="password" type="password" required />
+                  <div className="relative">
+                    <Input id="password" name="password" type={showPassword ? "text" : "password"} required />
+                    <Button variant="ghost" size="icon" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="department">Department</Label>
                   <Input id="department" name="department" required />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="title">Job Title</Label>
                   <Input id="title" name="title" required />
                 </div>
-                
+
                 <DialogFooter className="mt-4">
                   <Button type="submit">Create User</Button>
                 </DialogFooter>
@@ -212,7 +218,7 @@ const AdminUsers = () => {
             </DialogContent>
           </Dialog>
         </div>
-        
+
         {/* Users Table */}
         <Card>
           <CardHeader>
