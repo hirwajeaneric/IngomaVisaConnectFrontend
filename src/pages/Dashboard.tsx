@@ -8,8 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Eye, Clock, CheckCircle, AlertCircle, RefreshCw, MessageCircle } from "lucide-react";
 import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
+import { messagesService } from "@/lib/api/services/messages.service";
 import { useQuery } from "@tanstack/react-query";
 import { formatDate } from "@/lib/utils";
+import { UserMessagesTab } from "@/components/dashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -18,6 +20,12 @@ const Dashboard = () => {
   const { data: applications, isLoading, error } = useQuery({
     queryKey: ['applications'],
     queryFn: () => visaApplicationService.getUserApplications()
+  });
+
+  // Fetch unread message count for the dashboard card
+  const { data: unreadCountData } = useQuery({
+    queryKey: ["unreadCount"],
+    queryFn: () => messagesService.getUnreadCount(),
   });
 
   // Get status badge
@@ -51,26 +59,6 @@ const Dashboard = () => {
         return <FileText className="h-5 w-5" />;
     }
   };
-
-  // Mock messages
-  const messages = [
-    {
-      id: "msg-1",
-      from: "Immigration Officer",
-      subject: "Additional document required",
-      message: "Please provide a hotel reservation confirmation for your upcoming visit.",
-      date: "2025-05-11T13:20:00Z",
-      read: false
-    },
-    {
-      id: "msg-2",
-      from: "System",
-      subject: "Application Update",
-      message: "Your visa application has moved to the review phase.",
-      date: "2025-05-09T10:15:00Z",
-      read: true
-    }
-  ];
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -114,7 +102,7 @@ const Dashboard = () => {
                 <CardDescription>Requiring your attention</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">1</div>
+                <div className="text-3xl font-bold">{unreadCountData?.data.count || 0}</div>
               </CardContent>
             </Card>
           </div>
@@ -195,53 +183,7 @@ const Dashboard = () => {
             </TabsContent>
             
             <TabsContent value="messages">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl">Messages</CardTitle>
-                  <CardDescription>Communications regarding your applications</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div 
-                        key={message.id}
-                        className={`p-4 border rounded-md ${message.read ? 'bg-white' : 'bg-green-50'} hover:shadow-sm transition-shadow duration-200 cursor-pointer`}
-                        onClick={() => navigate(`/message/${message.id}`)}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <MessageCircle className={`h-5 w-5 mt-0.5 ${message.read ? 'text-gray-400' : 'text-secondary'}`} />
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-medium">{message.from}</p>
-                                <p className="text-sm text-gray-600">
-                                  {message.subject}
-                                </p>
-                              </div>
-                              <span className="text-sm text-gray-500">
-                                {formatDate(message.date)}
-                              </span>
-                            </div>
-                            <p className="mt-2 text-gray-700">{message.message}</p>
-                            <div className="mt-3">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/message/${message.id}`);
-                                }}
-                              >
-                                View Message
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <UserMessagesTab />
             </TabsContent>
           </Tabs>
         </div>

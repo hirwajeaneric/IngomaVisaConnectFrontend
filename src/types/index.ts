@@ -43,6 +43,8 @@ export interface VisaApplication {
   fundingSource?: string
   monthlyIncome?: number
   submissionDate?: string
+  userId: string
+  officerId?: string
 }
 
 export interface VisaType {

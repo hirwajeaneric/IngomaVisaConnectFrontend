@@ -4,9 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, CheckCircle2, Clock, FileText, MessageSquare, User, Video } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { Calendar, CheckCircle2, Clock, FileText, User, Video } from "lucide-react";
 import { generatePDF } from "@/lib/report-generator";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
@@ -16,21 +14,17 @@ import { useQuery } from "@tanstack/react-query";
 import { VisaApplicationResponse } from "@/types";
 import { getStatusBadge } from "@/components/widgets";
 import { formatDate, formatDateTime } from "@/lib/utils";
+import { ApplicationMessagesTab } from "@/components/dashboard";
 
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState("documents");
-  const [newMessage, setNewMessage] = useState("");
 
   const { data: application, isLoading, error } = useQuery({
     queryKey: ['application', id],
     queryFn: () => visaApplicationService.getApplicationById(id as string),
     enabled: !!id
   });
-
-  const mockMessages = [
-    { id: 1, date: "2025-05-15T14:25:00Z", from: "Officer Sarah", content: "Hello Mr. Smith, we require additional information about your planned activities in Burundi. Could you please provide a detailed itinerary?" },
-  ];
 
   const mockInterviews = [
     {
@@ -44,7 +38,6 @@ const ApplicationDetails = () => {
       location: "Online (Video Call)",
     }
   ];
-
 
   const getDocumentStatusBadge = (status: string) => {
     switch (status) {
@@ -78,20 +71,6 @@ const ApplicationDetails = () => {
       default:
         return type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
     }
-  };
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-
-    // In a real implementation, this would call an API to send a message
-    console.log(`Sending message: ${newMessage}`);
-
-    toast({
-      title: "Message Sent",
-      description: "Your message has been sent to the visa officer.",
-    });
-
-    setNewMessage("");
   };
 
   // Function to handle PDF download
@@ -326,64 +305,12 @@ const ApplicationDetails = () => {
 
             {/* Messages Tab */}
             <TabsContent value="messages">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Messages</CardTitle>
-                  <CardDescription>
-                    Communication with visa officers
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {mockMessages.length > 0 ? (
-                      mockMessages.map((message) => (
-                        <div key={message.id} className={`flex ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "justify-end" : ""}`}>
-                          <div className={`flex max-w-[75%] ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "flex-row-reverse" : ""}`}>
-                            <Avatar className={`h-8 w-8 ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "ml-2" : "mr-2"}`}>
-                              <AvatarFallback>{message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}` ? "JS" : "OS"}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className={`p-3 rounded-lg ${message.from === `${application.personalInfo.firstName} ${application.personalInfo.lastName}`
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted/20"
-                                }`}>
-                                <p>{message.content}</p>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {formatDateTime(message.date)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8">
-                        <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto opacity-20" />
-                        <p className="mt-2 text-muted-foreground">No messages yet</p>
-                      </div>
-                    )}
-
-                    <div className="mt-8 border-t pt-4">
-                      <div className="flex flex-col space-y-4">
-                        <Textarea
-                          placeholder="Type your message here..."
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          className="min-h-[100px]"
-                        />
-                        <Button
-                          className="w-full sm:w-auto self-end"
-                          onClick={handleSendMessage}
-                          disabled={!newMessage.trim()}
-                        >
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Send Message
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <ApplicationMessagesTab 
+                applicationId={application.id}
+                applicantName={`${application.personalInfo.firstName} ${application.personalInfo.lastName}`}
+                applicantId={application.userId}
+                officerId={application.officerId}
+              />
             </TabsContent>
 
             {/* Interview Tab */}
