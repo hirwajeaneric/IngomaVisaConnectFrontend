@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
@@ -18,11 +18,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { authService } from "@/lib/api/services/auth.service";
 import { useToast } from "@/components/ui/use-toast";
+import { User as UserType } from "@/types";
 
 export const AdminSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [user, setUser] = useState<UserType | null>(null);
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
@@ -45,56 +47,83 @@ export const AdminSidebar = () => {
     }
   };
 
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      setUser(JSON.parse(user));
+    }
+  }, []);
+
   const navItems = [
     { 
       label: "Dashboard", 
       icon: <LayoutDashboard className="h-5 w-5" />, 
-      href: "/dashboard/overview" 
+      href: "/dashboard/overview",
+      requireAdmin: true,
+      requireOfficer: false,
     },
     { 
       label: "Applications", 
       icon: <FileText className="h-5 w-5" />, 
-      href: "/dashboard/applications" 
+      href: "/dashboard/applications",
+      requireAdmin: true,
+      requireOfficer: true,
     },
     { 
       label: "Services", 
       icon: <List className="h-5 w-5" />, 
-      href: "/dashboard/services" 
+      href: "/dashboard/services",
+      requireAdmin: true,
+      requireOfficer: false,
     },
     { 
       label: "Messages", 
       icon: <MessageSquare className="h-5 w-5" />, 
-      href: "/dashboard/messages" 
+      href: "/dashboard/messages",
+      requireAdmin: true,
+      requireOfficer: true,
     },
     { 
       label: "Interviews", 
       icon: <Calendar className="h-5 w-5" />, 
-      href: "/dashboard/interviews" 
+      href: "/dashboard/interviews",
+      requireAdmin: true,
+      requireOfficer: true,
     },
     { 
       label: "Payments", 
       icon: <CreditCard className="h-5 w-5" />, 
-      href: "/dashboard/payments" 
+      href: "/dashboard/payments",
+      requireAdmin: true,
+      requireOfficer: false,
     },
     { 
       label: "Users", 
       icon: <Users className="h-5 w-5" />, 
-      href: "/dashboard/users" 
+      href: "/dashboard/users",
+      requireAdmin: true,
+      requireOfficer: false,
     },
     { 
       label: "Reports", 
       icon: <Download className="h-5 w-5" />, 
-      href: "/dashboard/reports" 
+      href: "/dashboard/reports",
+      requireAdmin: true,
+      requireOfficer: false,
     },
     { 
       label: "Settings", 
       icon: <Settings className="h-5 w-5" />, 
-      href: "/dashboard/settings" 
+      href: "/dashboard/settings",
+      requireAdmin: true,
+      requireOfficer: false,
     },
     { 
       label: "Profile", 
       icon: <User className="h-5 w-5" />, 
-      href: "/dashboard/profile" 
+      href: "/dashboard/profile",
+      requireAdmin: true,
+      requireOfficer: true,
     },
   ];
 
@@ -135,6 +164,37 @@ export const AdminSidebar = () => {
       <div className="flex-1 overflow-auto py-4">
         <nav className="space-y-1 px-2">
           {navItems.map((item) => (
+            user?.role === 'ADMIN' && item.requireAdmin && !item.requireOfficer ? (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                className={({ isActive }) => cn(
+                  "flex items-center py-2 px-3 rounded-md transition-colors",
+                  isActive 
+                  ? "bg-[#1EB53A] text-white font-medium" 
+                  : "text-white/80 hover:bg-primary-foreground/10",
+                  collapsed ? "justify-center" : ""
+                )}
+              >
+                {item.icon}
+                {!collapsed && <span className="ml-3">{item.label}</span>}
+              </NavLink>
+            ) : user?.role === 'OFFICER' && item.requireOfficer && ! item.requireAdmin ? (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                className={({ isActive }) => cn(
+                  "flex items-center py-2 px-3 rounded-md transition-colors",
+                  isActive 
+                  ? "bg-[#1EB53A] text-white font-medium"   
+                  : "text-white/80 hover:bg-primary-foreground/10",
+                  collapsed ? "justify-center" : ""
+                )}
+              >
+                {item.icon}
+                {!collapsed && <span className="ml-3">{item.label}</span>}
+              </NavLink>
+            ) : user?.role === 'ADMIN' && item.requireAdmin && item.requireOfficer ? (
             <NavLink
               key={item.href}
               to={item.href}
@@ -149,6 +209,22 @@ export const AdminSidebar = () => {
               {item.icon}
               {!collapsed && <span className="ml-3">{item.label}</span>}
             </NavLink>
+            ) : user?.role === 'OFFICER' && item.requireOfficer && item.requireAdmin ? (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                className={({ isActive }) => cn(
+                  "flex items-center py-2 px-3 rounded-md transition-colors",
+                  isActive 
+                  ? "bg-[#1EB53A] text-white font-medium" 
+                  : "text-white/80 hover:bg-primary-foreground/10",
+                  collapsed ? "justify-center" : ""
+                )}
+              >
+                {item.icon}
+                {!collapsed && <span className="ml-3">{item.label}</span>}
+              </NavLink>
+            ) : null
           ))}
         </nav>
       </div>

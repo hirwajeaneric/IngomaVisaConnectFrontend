@@ -4,14 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, Clock, FileText, User, Video, Upload } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, FileText, User, Video, Upload, Loader2 } from "lucide-react";
 import { generatePDF } from "@/lib/report-generator";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
 import { requestForDocumentService } from "@/lib/api/services/requestForDocument.service";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { interviewService, Interview } from "@/lib/api/services/interview.service";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { VisaApplicationResponse, RequestForDocument } from "@/types";
 import { getStatusBadge } from "@/components/widgets";
 import { formatDate, formatDateTime } from "@/lib/utils";
@@ -31,18 +32,33 @@ const ApplicationDetails = () => {
     enabled: !!id
   });
 
-  const mockInterviews = [
-    {
-      id: "int-001",
-      date: "2025-05-20",
-      time: "09:00 AM",
-      duration: "30 minutes",
-      officer: "Sarah Nkurunziza",
-      status: "scheduled",
-      joinUrl: "#",
-      location: "Online (Video Call)",
-    }
-  ];
+  // Fetch interviews for this application
+  const { data: interviewsResponse } = useQuery({
+    queryKey: ['application-interviews', id],
+    queryFn: () => interviewService.getApplicationInterviews(id as string),
+    enabled: !!id
+  });
+
+  const interviews = interviewsResponse?.data || [];
+
+  // Mutation for confirming interviews
+  const confirmInterviewMutation = useMutation({
+    mutationFn: (interviewId: string) => interviewService.confirmInterview(interviewId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['application-interviews', id] });
+      toast({
+        title: "Interview Confirmed",
+        description: "You have successfully confirmed your interview appointment.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Confirm Interview",
+        description: error.message || "An error occurred while confirming the interview.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const getDocumentStatusBadge = (status: string) => {
     switch (status) {
@@ -76,6 +92,41 @@ const ApplicationDetails = () => {
       default:
         return type.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
     }
+  };
+
+  const getInterviewStatusBadge = (status: string) => {
+    switch (status) {
+      case "SCHEDULED":
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Scheduled</Badge>;
+      case "RESCHEDULED":
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Rescheduled</Badge>;
+      case "COMPLETED":
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Completed</Badge>;
+      case "CANCELLED":
+        return <Badge variant="outline" className="bg-red-100 text-red-800">Cancelled</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const formatInterviewDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatInterviewTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   // Function to handle PDF download
@@ -112,11 +163,10 @@ const ApplicationDetails = () => {
             status: doc.verificationStatus,
             updatedAt: formatDate(doc.uploadDate)
           })),
-          interviews: mockInterviews.map(interview => ({
-            date: formatDate(interview.date),
-            time: interview.time,
-            duration: interview.duration,
-            officer: interview.officer,
+          interviews: interviews.map(interview => ({
+            date: formatDate(interview.scheduledDate),
+            time: formatInterviewTime(interview.scheduledDate),
+            status: interview.status,
             location: interview.location
           }))
         }
@@ -224,6 +274,10 @@ const ApplicationDetails = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleConfirmInterview = (interviewId: string) => {
+    confirmInterviewMutation.mutate(interviewId);
   };
 
   if (isLoading) {
@@ -428,37 +482,21 @@ const ApplicationDetails = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {mockInterviews.length > 0 ? (
+                  {interviews.length > 0 ? (
                     <div className="space-y-8">
-                      {mockInterviews.map((interview) => (
+                      {interviews.map((interview) => (
                         <div key={interview.id} className="border rounded-lg p-6">
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-semibold">Visa Interview</h3>
-                            {getStatusBadge(interview.status)}
+                            {getInterviewStatusBadge(interview.status)}
                           </div>
 
                           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                             <div className="flex items-center">
                               <Calendar className="h-5 w-5 text-muted-foreground mr-3" />
                               <div>
-                                <p className="text-sm text-muted-foreground">Date</p>
-                                <p className="font-medium">{formatDate(interview.date)}</p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center">
-                              <Clock className="h-5 w-5 text-muted-foreground mr-3" />
-                              <div>
-                                <p className="text-sm text-muted-foreground">Time</p>
-                                <p className="font-medium">{interview.time} ({interview.duration})</p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center">
-                              <User className="h-5 w-5 text-muted-foreground mr-3" />
-                              <div>
-                                <p className="text-sm text-muted-foreground">Interview Officer</p>
-                                <p className="font-medium">{interview.officer}</p>
+                                <p className="text-sm text-muted-foreground">Date & Time</p>
+                                <p className="font-medium">{formatInterviewDateTime(interview.scheduledDate)}</p>
                               </div>
                             </div>
 
@@ -469,30 +507,72 @@ const ApplicationDetails = () => {
                                 <p className="font-medium">{interview.location}</p>
                               </div>
                             </div>
+
+                            {interview.assignedOfficer && (
+                              <div className="flex items-center">
+                                <User className="h-5 w-5 text-muted-foreground mr-3" />
+                                <div>
+                                  <p className="text-sm text-muted-foreground">Interview Officer</p>
+                                  <p className="font-medium">{interview.assignedOfficer.name}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="flex items-center">
+                              <CheckCircle2 className="h-5 w-5 text-muted-foreground mr-3" />
+                              <div>
+                                <p className="text-sm text-muted-foreground">Confirmation Status</p>
+                                <p className="font-medium">
+                                  {interview.confirmed ? (
+                                    <Badge className="bg-green-100 text-green-800">Confirmed</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pending Confirmation</Badge>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
                           </div>
+
+                          {interview.notes && (
+                            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                              <p className="text-sm font-medium text-muted-foreground mb-2">Interview Notes</p>
+                              <p className="text-sm">{interview.notes}</p>
+                            </div>
+                          )}
+
+                          {interview.outcome && (
+                            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                              <p className="text-sm font-medium text-blue-800 mb-2">Interview Outcome</p>
+                              <p className="text-sm text-blue-700">{interview.outcome}</p>
+                            </div>
+                          )}
 
                           <div className="mt-8 space-x-3">
-                            {interview.status === 'scheduled' && (
-                              <Button>
-                                <Video className="h-4 w-4 mr-2" />
-                                Join Interview
+                            {interview.status === 'SCHEDULED' && !interview.confirmed && (
+                              <Button 
+                                onClick={() => handleConfirmInterview(interview.id)}
+                                disabled={confirmInterviewMutation.isPending}
+                              >
+                                {confirmInterviewMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Confirming...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Calendar className="h-4 w-4 mr-2" />
+                                    Confirm Appointment
+                                  </>
+                                )}
                               </Button>
                             )}
-                            <Button variant="outline">Reschedule</Button>
-                          </div>
-
-                          <div className="mt-6 bg-muted/30 p-4 rounded-lg">
-                            <div className="flex items-center">
-                              <CheckCircle2 className="h-5 w-5 text-primary mr-2" />
-                              <h4 className="font-medium">Interview Preparation Tips</h4>
-                            </div>
-                            <ul className="mt-2 ml-7 list-disc text-sm space-y-1">
-                              <li>Have your passport and application documents ready</li>
-                              <li>Test your camera and microphone before the interview</li>
-                              <li>Find a quiet place with good lighting</li>
-                              <li>Be prepared to answer questions about your travel plans</li>
-                              <li>Dress formally as you would for an in-person interview</li>
-                            </ul>
+                            
+                            {interview.confirmed && (
+                              <Badge className="bg-green-100 text-green-800">
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Confirmed on {formatDateTime(interview.confirmedAt || '')}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       ))}

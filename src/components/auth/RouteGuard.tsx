@@ -5,9 +5,11 @@ interface RouteGuardProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   requireAdmin?: boolean;
+  requireOfficer?: boolean;
+  requireBothAdminAndOfficer?: boolean;
 }
 
-export const RouteGuard = ({ children, requireAuth = false, requireAdmin = false }: RouteGuardProps) => {
+export const RouteGuard = ({ children, requireAuth = false, requireAdmin = false, requireOfficer = false, requireBothAdminAndOfficer = false }: RouteGuardProps) => {
   const location = useLocation();
   const isAuthenticated = authService.isAuthenticated();
   const user = authService.getCurrentUser();
@@ -24,6 +26,18 @@ export const RouteGuard = ({ children, requireAuth = false, requireAdmin = false
     return <Navigate to="/dashboard/login" replace />;
   }
 
-  // If all checks pass, render the children
+  // If officer access is required and user is not an officer
+  if (requireOfficer && user?.role !== 'OFFICER') {
+    // Redirect to dashboard login page
+    return <Navigate to="/dashboard/login" replace />;
+  }
+
+  // If both admin and officer access is required and user is not both
+  if (requireBothAdminAndOfficer && user?.role !== 'ADMIN' && user?.role !== 'OFFICER') {
+    // Redirect to dashboard login page
+    return <Navigate to="/dashboard/login" replace />;
+  }
+
+    // If all checks pass, render the children
   return <>{children}</>;
 }; 

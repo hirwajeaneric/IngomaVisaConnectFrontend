@@ -47,6 +47,7 @@ import AdminUpdateVisaType from "./pages/admin/AdminUpdateService";
 import AdminUpdateService from "./pages/admin/AdminUpdateService";
 import Payment from '@/pages/Payment';
 import PaymentSuccess from '@/pages/PaymentSuccess';
+import AdminInterviewDetails from "./pages/admin/AdminInterviewDetails";
 
 const App = () => {
   const queryClient = new QueryClient();
@@ -116,6 +117,24 @@ const App = () => {
                 }
               />
 
+              {/* Payment Routes */}
+              <Route
+                path="/payment"
+                element={
+                  <RouteGuard>
+                    <Payment />
+                  </RouteGuard>
+                }
+              />
+              <Route
+                path="/payment-success"
+                element={
+                  <RouteGuard>
+                    <PaymentSuccess />
+                  </RouteGuard>
+                }
+              />
+
               {/* Public Admin Routes */}
               <Route path="/dashboard/login" element={<AdminLogin />} />
               <Route path="/dashboard/forgot-password" element={<AdminForgotPassword />} />
@@ -141,7 +160,7 @@ const App = () => {
               <Route
                 path="/dashboard/applications"
                 element={
-                  <RouteGuard requireAdmin>
+                  <RouteGuard requireBothAdminAndOfficer>
                     <AdminApplications />
                   </RouteGuard>
                 }
@@ -149,7 +168,7 @@ const App = () => {
               <Route
                 path="/dashboard/application/:id"
                 element={
-                  <RouteGuard requireAdmin>
+                  <RouteGuard requireBothAdminAndOfficer>
                     <AdminApplicationDetail />
                   </RouteGuard>
                 }
@@ -157,7 +176,7 @@ const App = () => {
               <Route
                 path="/dashboard/messages"
                 element={
-                  <RouteGuard requireAdmin>
+                  <RouteGuard requireBothAdminAndOfficer>
                     <AdminMessages />
                   </RouteGuard>
                 }
@@ -165,8 +184,16 @@ const App = () => {
               <Route
                 path="/dashboard/interviews"
                 element={
-                  <RouteGuard requireAdmin>
+                  <RouteGuard requireBothAdminAndOfficer>
                     <AdminInterviews />
+                  </RouteGuard>
+                }
+              />
+              <Route
+                path="/dashboard/interview/:id"
+                element={
+                  <RouteGuard requireBothAdminAndOfficer>
+                    <AdminInterviewDetails />
                   </RouteGuard>
                 }
               />
@@ -189,7 +216,7 @@ const App = () => {
               <Route
                 path="/dashboard/profile"
                 element={
-                  <RouteGuard requireAdmin>
+                  <RouteGuard requireBothAdminAndOfficer>
                     <AdminProfile />
                   </RouteGuard>
                 }
@@ -221,7 +248,7 @@ const App = () => {
               <Route
                 path="/dashboard/reports"
                 element={
-                  <RouteGuard requireAdmin>
+                  <RouteGuard requireBothAdminAndOfficer>
                     <AdminReports />
                   </RouteGuard>
                 }
@@ -257,24 +284,6 @@ const App = () => {
                 element={
                   <RouteGuard requireAdmin>
                     <AdminUpdateService />
-                  </RouteGuard>
-                }
-              />
-
-              {/* Payment Routes */}
-              <Route
-                path="/payment"
-                element={
-                  <RouteGuard>
-                    <Payment />
-                  </RouteGuard>
-                }
-              />
-              <Route
-                path="/payment-success"
-                element={
-                  <RouteGuard>
-                    <PaymentSuccess />
                   </RouteGuard>
                 }
               />

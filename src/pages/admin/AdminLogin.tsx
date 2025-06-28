@@ -63,6 +63,8 @@ const AdminLogin = () => {
       const userRole = response.data.user.role;
       if (userRole === 'ADMIN') {
         navigate("/dashboard/overview");
+      } else if (userRole === 'OFFICER') {
+        navigate("/dashboard/applications");
       } else {
         toast({
           title: "Access Denied",
@@ -93,7 +95,7 @@ const AdminLogin = () => {
         <h1 className="text-3xl font-bold text-center text-primary">INGOMA DASHBOARD</h1>
         <p className="text-center text-gray-600 mt-2">Burundi eVisa Portal Administration</p>
       </div>
-      
+
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Admin Login</CardTitle>
@@ -105,10 +107,10 @@ const AdminLogin = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="admin@gov.bi" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@gov.bi"
                 {...register("email")}
                 aria-invalid={errors.email ? "true" : "false"}
               />
@@ -119,15 +121,15 @@ const AdminLogin = () => {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"} 
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
                   {...register("password")}
                   aria-invalid={errors.password ? "true" : "false"}
                 />
-                <Button 
+                <Button
                   type="button"
-                  variant="ghost" 
+                  variant="ghost"
                   size="icon"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-0 top-0 h-full"
@@ -141,8 +143,8 @@ const AdminLogin = () => {
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="rememberMe" 
+                <Checkbox
+                  id="rememberMe"
                   {...register("rememberMe")}
                 />
                 <Label htmlFor="rememberMe" className="text-sm">Remember me</Label>
@@ -153,8 +155,8 @@ const AdminLogin = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-primary hover:bg-primary/90"
               disabled={isSubmitting || loginMutation.isPending}
             >
@@ -164,7 +166,7 @@ const AdminLogin = () => {
           </CardFooter>
         </form>
       </Card>
-      
+
       <div className="mt-8 text-center text-sm text-gray-600">
         <p>
           &copy; {new Date().getFullYear()} Republic of Burundi Immigration Department
