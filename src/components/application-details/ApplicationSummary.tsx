@@ -53,17 +53,6 @@ export const ApplicationSummary: React.FC<ApplicationSummaryProps> = ({
             </dd>
           </div>
         </dl>
-        
-        <div className="mt-6 flex space-x-4">
-          <Button className="flex-1" variant="destructive">
-            <XCircle className="h-4 w-4 mr-2" />
-            Reject
-          </Button>
-          <Button className="flex-1">
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Approve
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

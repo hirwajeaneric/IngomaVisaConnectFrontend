@@ -17,21 +17,29 @@ import {
 import { formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { documentService } from "@/lib/api/services/document.service";
+import { requestForDocumentService } from "@/lib/api/services/requestForDocument.service";
 import { Document } from "./types";
 
 interface DocumentsListProps {
   documents: Document[];
   onDocumentUpdate: (documents: Document[] | null) => void;
+  applicationId?: string;
+  onDocumentRequestCreated?: () => void;
 }
 
 export const DocumentsList: React.FC<DocumentsListProps> = ({
   documents,
-  onDocumentUpdate
+  onDocumentUpdate,
+  applicationId,
+  onDocumentRequestCreated
 }) => {
   const [selectedDocument, setSelectedDocument] = useState<{ id: string, name: string, type: string, size: string, verified: boolean, rejectionReason?: string, verifiedBy?: string, verifiedAt?: string } | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [requestDocumentName, setRequestDocumentName] = useState("");
   const [requestDocumentDetails, setRequestDocumentDetails] = useState("");
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [isVerifyingDocument, setIsVerifyingDocument] = useState(false);
+  const [isRejectingDocument, setIsRejectingDocument] = useState(false);
 
   /**
    * Converts a document type code to a human-readable name
@@ -78,6 +86,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
   const handleDocumentVerify = async () => {
     if (!selectedDocument) return;
     
+    setIsVerifyingDocument(true);
     try {
       // Update the document status in the database
       const response = await documentService.verifyDocument(selectedDocument.id, true, rejectionReason);
@@ -114,10 +123,11 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
         description: "An error occurred while verifying the document. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsVerifyingDocument(false);
+      setSelectedDocument(null);
+      setRejectionReason("");
     }
-    
-    setSelectedDocument(null);
-    setRejectionReason("");
   };
 
   /**
@@ -126,6 +136,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
   const handleDocumentReject = async () => {
     if (!selectedDocument || !rejectionReason.trim()) return;
 
+    setIsRejectingDocument(true);
     try {
       // Update the document status in the database
       const response = await documentService.rejectDocument(selectedDocument.id, rejectionReason);
@@ -162,25 +173,54 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
         description: "An error occurred while rejecting the document. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsRejectingDocument(false);
+      setSelectedDocument(null);
+      setRejectionReason("");
     }
-
-    setSelectedDocument(null);
-    setRejectionReason("");
   };
 
   /**
    * Handles the document request process
    */
-  const handleRequestDocument = () => {
-    if (!requestDocumentName.trim()) return;
+  const handleRequestDocument = async () => {
+    if (!requestDocumentName.trim() || !applicationId) return;
 
-    toast({
-      title: "Document Requested",
-      description: `${requestDocumentName} has been requested from the applicant.`,
-    });
+    setIsSubmittingRequest(true);
+    try {
+      const response = await requestForDocumentService.createRequestForDocument(applicationId, {
+        documentName: requestDocumentName,
+        additionalDetails: requestDocumentDetails
+      });
 
-    setRequestDocumentName("");
-    setRequestDocumentDetails("");
+      if (response.success) {
+        toast({
+          title: "Document Requested",
+          description: `${requestDocumentName} has been requested from the applicant.`,
+        });
+        setRequestDocumentName("");
+        setRequestDocumentDetails("");
+        
+        // Trigger update of document requests list
+        if (onDocumentRequestCreated) {
+          onDocumentRequestCreated();
+        }
+      } else {
+        toast({
+          title: "Request Failed",
+          description: response.message || "Failed to create document request.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Request Failed",
+        description: "An error occurred while creating the document request. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingRequest(false);
+    }
   };
 
   /**
@@ -281,16 +321,35 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                         <Button
                           variant="destructive"
                           onClick={handleDocumentReject}
-                          disabled={!rejectionReason.trim()}
+                          disabled={!rejectionReason.trim() || isRejectingDocument || isVerifyingDocument}
                         >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Reject
+                          {isRejectingDocument ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Rejecting...
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Reject
+                            </>
+                          )}
                         </Button>
                         <Button
                           onClick={handleDocumentVerify}
+                          disabled={isVerifyingDocument || isRejectingDocument}
                         >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Verify
+                          {isVerifyingDocument ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Verifying...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Verify
+                            </>
+                          )}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -346,9 +405,16 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
               <DialogFooter>
                 <Button
                   onClick={handleRequestDocument}
-                  disabled={!requestDocumentName.trim()}
+                  disabled={!requestDocumentName.trim() || !applicationId || isSubmittingRequest}
                 >
-                  Send Request
+                  {isSubmittingRequest ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Sending Request...
+                    </>
+                  ) : (
+                    "Send Request"
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>

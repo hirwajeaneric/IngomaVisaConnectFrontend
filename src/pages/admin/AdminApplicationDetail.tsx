@@ -14,6 +14,7 @@ import {
   ApplicantInfo,
   TravelInfo,
   DocumentsList,
+  DocumentRequestsList,
   MessagesTab,
   PaymentInfo,
   ApplicationTravelInfo
@@ -27,6 +28,7 @@ const AdminApplicationDetail = () => {
   const [notes, setNotes] = useState("");
   const [interviewDate, setInterviewDate] = useState("");
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [documentRequests, setDocumentRequests] = useState<any[]>([]);
   const queryClient = useQueryClient();
 
   const { data: applicationData, isLoading, error, refetch } = useQuery({
@@ -38,6 +40,9 @@ const AdminApplicationDetail = () => {
   React.useEffect(() => {
     if (applicationData?.documents) {
       setDocuments(applicationData.documents);
+    }
+    if (applicationData?.requestForDocuments) {
+      setDocumentRequests(applicationData.requestForDocuments);
     }
   }, [applicationData]);
 
@@ -147,6 +152,37 @@ const AdminApplicationDetail = () => {
     }
   };
 
+  const handleDocumentRequestsUpdate = async (updatedRequests: any[] | null) => {
+    if (updatedRequests === null) {
+      // This indicates we need to refetch from the server
+      try {
+        await refetch();
+        toast({
+          title: "Document Requests Refreshed",
+          description: "Document requests have been updated from the server.",
+        });
+      } catch (error) {
+        toast({
+          title: "Refresh Failed",
+          description: "Failed to refresh document requests. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // Update local state with the new requests data
+      setDocumentRequests(updatedRequests);
+    }
+  };
+
+  const handleDocumentRequestCreated = async () => {
+    // Refresh the document requests list when a new request is created
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Failed to refresh document requests after creation:', error);
+    }
+  };
+
   const applicantName = `${application.personalInfo.firstName} ${application.personalInfo.lastName}`;
 
   return (
@@ -202,10 +238,20 @@ const AdminApplicationDetail = () => {
           
           {/* Documents Tab */}
           <TabsContent value="documents">
-            <DocumentsList 
-              documents={documents}
-              onDocumentUpdate={handleDocumentUpdate}
-            />
+            <div className="space-y-6">
+              <DocumentsList 
+                documents={documents}
+                onDocumentUpdate={handleDocumentUpdate}
+                applicationId={application.id}
+                onDocumentRequestCreated={handleDocumentRequestCreated}
+              />
+              <DocumentRequestsList
+                applicationId={application.id}
+                requests={documentRequests}
+                onRequestsUpdate={handleDocumentRequestsUpdate}
+                userRole="OFFICER"
+              />
+            </div>
           </TabsContent>
           
           {/* Messages Tab */}
