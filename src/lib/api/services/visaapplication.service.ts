@@ -86,6 +86,30 @@ export interface VisaApplication {
   travelInfo: TravelInfo | null;
   documents: Document[];
   payment: Payment | null;
+  requestForDocuments?: RequestForDocument[];
+}
+
+export interface RequestForDocument {
+  id: string;
+  applicationId: string;
+  documentName: string;
+  additionalDetails?: string;
+  status: 'SENT' | 'SUBMITTED' | 'CANCELLED';
+  officer: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  document?: {
+    id: string;
+    fileName: string;
+    filePath: string;
+    fileSize: number;
+    uploadDate: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ApiResponse<T> {

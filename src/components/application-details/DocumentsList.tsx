@@ -297,12 +297,6 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                           </div>
                         </div>
 
-                        <div className="border rounded-md p-4">
-                          <p className="text-sm">Document preview would appear here in a real application.</p>
-                          <p className="text-sm text-muted-foreground mt-2">File: {doc.fileName}</p>
-                          <p className="text-sm text-muted-foreground">Size: {formatFileSize(doc.fileSize)}</p>
-                        </div>
-
                         {selectedDocument?.rejectionReason && (
                           <div className="border rounded-md p-4 bg-red-500/10">
                             <p className="text-sm">Rejection Reason:</p>

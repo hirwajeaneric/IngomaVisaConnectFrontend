@@ -4,21 +4,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, Clock, FileText, User, Video } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, FileText, User, Video, Upload } from "lucide-react";
 import { generatePDF } from "@/lib/report-generator";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
-import { useQuery } from "@tanstack/react-query";
-import { VisaApplicationResponse } from "@/types";
+import { requestForDocumentService } from "@/lib/api/services/requestForDocument.service";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { VisaApplicationResponse, RequestForDocument } from "@/types";
 import { getStatusBadge } from "@/components/widgets";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { ApplicationMessagesTab } from "@/components/dashboard";
+import { DocumentRequestsList } from "@/components/application-details";
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/configs/firebase';
 
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState("documents");
+  const queryClient = useQueryClient();
 
   const { data: application, isLoading, error } = useQuery({
     queryKey: ['application', id],
@@ -129,6 +134,93 @@ const ApplicationDetails = () => {
       toast({
         title: "Download Failed",
         description: "There was an error downloading your application details.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDocumentRequestsUpdate = async (updatedRequests: RequestForDocument[] | null) => {
+    if (updatedRequests === null) {
+      // This indicates we need to refetch from the server
+      try {
+        await queryClient.invalidateQueries({ queryKey: ['application', id] });
+        toast({
+          title: "Document Requests Refreshed",
+          description: "Document requests have been updated from the server.",
+        });
+      } catch (error) {
+        toast({
+          title: "Refresh Failed",
+          description: "Failed to refresh document requests. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const uploadDocumentToFirebase = async (file: File, applicationId: string, documentType: string): Promise<string> => {
+    const storageRef = ref(storage, `requested-documents/${applicationId}-${documentType}-${Date.now()}-${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          console.log('Upload progress:', progress);
+        },
+        (error) => {
+          console.error('Upload error:', error);
+          reject(error);
+        },
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          } catch (error) {
+            reject(error);
+          }
+        }
+      );
+    });
+  };
+
+  const handleSubmitDocumentForRequest = async (requestId: string, documentType: string, file: File) => {
+    if (!application?.id) return;
+
+    try {
+      // Upload to Firebase first
+      const filePath = await uploadDocumentToFirebase(file, application.id, documentType);
+      
+      // Submit the document for the request
+      const response = await requestForDocumentService.submitDocumentForRequest(requestId, {
+        documentType,
+        fileName: file.name,
+        filePath,
+        fileSize: file.size,
+      });
+
+      if (response.success) {
+        toast({
+          title: "Document Submitted",
+          description: "Document has been submitted successfully for review.",
+        });
+        // Refresh the application data to update the requests list
+        await queryClient.invalidateQueries({ queryKey: ['application', id] });
+      } else {
+        toast({
+          title: "Submission Failed",
+          description: response.message || "Failed to submit document.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting document:', error);
+      toast({
+        title: "Submission Failed",
+        description: "An error occurred while submitting the document. Please try again.",
         variant: "destructive",
       });
     }
@@ -256,51 +348,64 @@ const ApplicationDetails = () => {
 
             {/* Documents Tab */}
             <TabsContent value="documents">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Application Documents</CardTitle>
-                  <CardDescription>
-                    Status of your submitted documents
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {application.documents.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30"
-                      >
-                        <div className="flex items-center">
-                          <div
-                            className={`h-10 w-10 rounded-lg flex items-center justify-center mr-4 ${doc.verificationStatus === 'VERIFIED' ? 'bg-green-100' :
-                              doc.verificationStatus === 'REJECTED' ? 'bg-red-100' : 'bg-gray-100'
-                              }`}
-                          >
-                            <FileText className={`h-5 w-5 ${doc.verificationStatus === 'VERIFIED' ? 'text-green-600' :
-                              doc.verificationStatus === 'REJECTED' ? 'text-red-600' : 'text-gray-600'
-                              }`} />
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Application Documents</CardTitle>
+                    <CardDescription>
+                      Status of your submitted documents
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {application.documents.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30"
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className={`h-10 w-10 rounded-lg flex items-center justify-center mr-4 ${doc.verificationStatus === 'VERIFIED' ? 'bg-green-100' :
+                                doc.verificationStatus === 'REJECTED' ? 'bg-red-100' : 'bg-gray-100'
+                                }`}
+                            >
+                              <FileText className={`h-5 w-5 ${doc.verificationStatus === 'VERIFIED' ? 'text-green-600' :
+                                doc.verificationStatus === 'REJECTED' ? 'text-red-600' : 'text-gray-600'
+                                }`} />
+                            </div>
+                            <div>
+                              <p className="font-medium">{getDocumentTypeName(doc.documentType)}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Uploaded: {formatDate(doc.uploadDate)}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                File: {doc.fileName}
+                              </p>
+                            </div>
                           </div>
                           <div>
-                            <p className="font-medium">{getDocumentTypeName(doc.documentType)}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Uploaded: {formatDate(doc.uploadDate)}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              File: {doc.fileName}
-                            </p>
+                            {getDocumentStatusBadge(doc.verificationStatus)}
+                            {doc.verificationStatus === 'REJECTED' && doc.rejectionReason && (
+                              <p className="text-sm text-red-600 mt-1">{doc.rejectionReason}</p>
+                            )}
                           </div>
                         </div>
-                        <div>
-                          {getDocumentStatusBadge(doc.verificationStatus)}
-                          {doc.verificationStatus === 'REJECTED' && doc.rejectionReason && (
-                            <p className="text-sm text-red-600 mt-1">{doc.rejectionReason}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Document Requests Section */}
+                {application.requestForDocuments && application.requestForDocuments.length > 0 && (
+                  <DocumentRequestsList
+                    applicationId={application.id}
+                    requests={application.requestForDocuments}
+                    onRequestsUpdate={handleDocumentRequestsUpdate}
+                    userRole="APPLICANT"
+                    onSubmitDocument={handleSubmitDocumentForRequest}
+                  />
+                )}
+              </div>
             </TabsContent>
 
             {/* Messages Tab */}

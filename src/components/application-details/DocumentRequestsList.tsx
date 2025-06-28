@@ -17,44 +17,24 @@ import {
 import { formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { requestForDocumentService } from "@/lib/api/services/requestForDocument.service";
-
-interface DocumentRequest {
-  id: string;
-  applicationId: string;
-  documentName: string;
-  additionalDetails?: string;
-  status: 'SENT' | 'SUBMITTED' | 'CANCELLED';
-  officer: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-  };
-  document?: {
-    id: string;
-    fileName: string;
-    filePath: string;
-    fileSize: number;
-    uploadDate: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
+import { RequestForDocument } from "@/types";
 
 interface DocumentRequestsListProps {
   applicationId: string;
-  requests: DocumentRequest[];
-  onRequestsUpdate: (requests: DocumentRequest[] | null) => void;
+  requests: RequestForDocument[];
+  onRequestsUpdate: (requests: RequestForDocument[] | null) => void;
   userRole?: string;
+  onSubmitDocument?: (requestId: string, documentType: string, file: File) => Promise<void>;
 }
 
 export const DocumentRequestsList: React.FC<DocumentRequestsListProps> = ({
   applicationId,
   requests,
   onRequestsUpdate,
-  userRole
+  userRole,
+  onSubmitDocument
 }) => {
-  const [selectedRequest, setSelectedRequest] = useState<DocumentRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<RequestForDocument | null>(null);
   const [isSubmittingDocument, setIsSubmittingDocument] = useState(false);
   const [isCancellingRequest, setIsCancellingRequest] = useState<string | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
@@ -98,18 +78,9 @@ export const DocumentRequestsList: React.FC<DocumentRequestsListProps> = ({
 
     setIsSubmittingDocument(true);
     try {
-      // In a real application, you would upload the file to a storage service first
-      // For now, we'll simulate the upload with a mock file path
-      const mockFilePath = `/uploads/${Date.now()}_${documentFile.name}`;
-      
-      const response = await requestForDocumentService.submitDocumentForRequest(selectedRequest.id, {
-        documentType,
-        fileName: documentFile.name,
-        filePath: mockFilePath,
-        fileSize: documentFile.size,
-      });
-
-      if (response.success) {
+      if (onSubmitDocument) {
+        // Use external upload function
+        await onSubmitDocument(selectedRequest.id, documentType, documentFile);
         toast({
           title: "Document Submitted",
           description: "Document has been submitted successfully.",
@@ -120,11 +91,35 @@ export const DocumentRequestsList: React.FC<DocumentRequestsListProps> = ({
         // Trigger refresh of requests
         onRequestsUpdate(null);
       } else {
-        toast({
-          title: "Submission Failed",
-          description: response.message || "Failed to submit document.",
-          variant: "destructive",
+        // Fallback to internal logic
+        // In a real application, you would upload the file to a storage service first
+        // For now, we'll simulate the upload with a mock file path
+        const mockFilePath = `/uploads/${Date.now()}_${documentFile.name}`;
+        
+        const response = await requestForDocumentService.submitDocumentForRequest(selectedRequest.id, {
+          documentType,
+          fileName: documentFile.name,
+          filePath: mockFilePath,
+          fileSize: documentFile.size,
         });
+
+        if (response.success) {
+          toast({
+            title: "Document Submitted",
+            description: "Document has been submitted successfully.",
+          });
+          setSelectedRequest(null);
+          setDocumentFile(null);
+          setDocumentType("");
+          // Trigger refresh of requests
+          onRequestsUpdate(null);
+        } else {
+          toast({
+            title: "Submission Failed",
+            description: response.message || "Failed to submit document.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       toast({

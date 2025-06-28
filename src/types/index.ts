@@ -45,6 +45,7 @@ export interface VisaApplication {
   submissionDate?: string
   userId: string
   officerId?: string
+  requestForDocuments?: RequestForDocument[]
 }
 
 export interface VisaType {
@@ -131,6 +132,28 @@ export interface Payment {
   refundReason?: string
 }
 
+export interface RequestForDocument {
+  id: string;
+  applicationId: string;
+  documentName: string;
+  additionalDetails?: string;
+  status: 'SENT' | 'SUBMITTED' | 'CANCELLED';
+  officer: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  document?: {
+    id: string;
+    fileName: string;
+    filePath: string;
+    fileSize: number;
+    uploadDate: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
 
 // Admin-related types
 export interface AdminUser extends User {
