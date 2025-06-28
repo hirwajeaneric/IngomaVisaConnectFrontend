@@ -16,31 +16,28 @@ import {
 } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-
-interface Document {
-  id: string;
-  documentType: string;
-  fileName: string;
-  fileSize: number;
-  filePath: string;
-  uploadDate: string;
-  verificationStatus: string;
-}
+import { documentService } from "@/lib/api/services/document.service";
+import { Document } from "./types";
 
 interface DocumentsListProps {
   documents: Document[];
-  onDocumentUpdate: (documents: Document[]) => void;
+  onDocumentUpdate: (documents: Document[] | null) => void;
 }
 
 export const DocumentsList: React.FC<DocumentsListProps> = ({
   documents,
   onDocumentUpdate
 }) => {
-  const [selectedDocument, setSelectedDocument] = useState<{name: string, type: string, size: string, verified: boolean} | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<{ id: string, name: string, type: string, size: string, verified: boolean, rejectionReason?: string, verifiedBy?: string, verifiedAt?: string } | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [requestDocumentName, setRequestDocumentName] = useState("");
   const [requestDocumentDetails, setRequestDocumentDetails] = useState("");
 
+  /**
+   * Converts a document type code to a human-readable name
+   * @param {string} type the document type code
+   * @returns {string} the human-readable name
+   */
   const getDocumentTypeName = (type: string) => {
     switch (type) {
       case "passportCopy":
@@ -62,6 +59,11 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
     }
   };
 
+  /**
+   * Formats a file size to a human-readable string
+   * @param {number} bytes the file size in bytes
+   * @returns {string} the human-readable file size
+   */
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -70,49 +72,121 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleDocumentVerify = () => {
+  /**
+   * Handles the document verification process
+   */
+  const handleDocumentVerify = async () => {
     if (!selectedDocument) return;
     
-    // Update the document status in the UI
-    const updatedDocuments = documents.map(doc => 
-      doc.documentType === selectedDocument.name ? {...doc, verificationStatus: 'VERIFIED'} : doc
-    );
-    
-    onDocumentUpdate(updatedDocuments);
-    
-    toast({
-      title: "Document Verified",
-      description: `${selectedDocument.name} has been marked as verified.`,
-    });
-    
-    setSelectedDocument(null);
-  };
-  
-  const handleDocumentReject = () => {
-    if (!selectedDocument || !rejectionReason.trim()) return;
-    
-    toast({
-      title: "Document Rejected",
-      description: `${selectedDocument.name} has been rejected.`,
-      variant: "destructive",
-    });
+    try {
+      // Update the document status in the database
+      const response = await documentService.verifyDocument(selectedDocument.id, true, rejectionReason);
+
+      if (response.success && response.data && response.data.verificationStatus) {
+        // Update the document status in the UI with the returned data
+        const updatedDocuments = documents.map(doc =>
+          doc.id === selectedDocument.id ? {
+            ...doc,
+            verificationStatus: response.data.verificationStatus,
+            verifiedBy: response.data.verifiedBy,
+            verifiedAt: response.data.verifiedAt,
+            rejectionReason: response.data.rejectionReason
+          } : doc
+        );
+        onDocumentUpdate(updatedDocuments);
+        
+        toast({
+          title: "Document Verified",
+          description: `${selectedDocument.name} has been marked as verified.`,
+        });
+      } else {
+        // Fallback: trigger a reload if the API response doesn't contain the expected data
+        toast({
+          title: "Document Verified",
+          description: `${selectedDocument.name} has been marked as verified. Refreshing document list...`,
+        });
+        // Trigger a reload by calling onDocumentUpdate with null to indicate a refresh is needed
+        onDocumentUpdate(null);
+      }
+    } catch (error) {
+      toast({
+        title: "Document Verification Failed",
+        description: "An error occurred while verifying the document. Please try again.",
+        variant: "destructive",
+      });
+    }
     
     setSelectedDocument(null);
     setRejectionReason("");
   };
-  
+
+  /**
+   * Handles the document rejection process
+   */
+  const handleDocumentReject = async () => {
+    if (!selectedDocument || !rejectionReason.trim()) return;
+
+    try {
+      // Update the document status in the database
+      const response = await documentService.rejectDocument(selectedDocument.id, rejectionReason);
+
+      if (response.success && response.data && response.data.verificationStatus) {
+        // Update the document status in the UI with the returned data
+        const updatedDocuments = documents.map(doc =>
+          doc.id === selectedDocument.id ? {
+            ...doc,
+            verificationStatus: response.data.verificationStatus,
+            verifiedBy: response.data.verifiedBy,
+            verifiedAt: response.data.verifiedAt,
+            rejectionReason: response.data.rejectionReason
+          } : doc
+        );
+        onDocumentUpdate(updatedDocuments);
+        
+        toast({
+          title: "Document Rejected",
+          description: `${selectedDocument.name} has been rejected.`,
+        });
+      } else {
+        // Fallback: trigger a reload if the API response doesn't contain the expected data
+        toast({
+          title: "Document Rejected",
+          description: `${selectedDocument.name} has been rejected. Refreshing document list...`,
+        });
+        // Trigger a reload by calling onDocumentUpdate with null to indicate a refresh is needed
+        onDocumentUpdate(null);
+      }
+    } catch (error) {
+      toast({
+        title: "Document Rejection Failed",
+        description: "An error occurred while rejecting the document. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    setSelectedDocument(null);
+    setRejectionReason("");
+  };
+
+  /**
+   * Handles the document request process
+   */
   const handleRequestDocument = () => {
     if (!requestDocumentName.trim()) return;
-    
+
     toast({
       title: "Document Requested",
       description: `${requestDocumentName} has been requested from the applicant.`,
     });
-    
+
     setRequestDocumentName("");
     setRequestDocumentDetails("");
   };
 
+  /**
+   * Renders the documents list
+   * @returns {JSX.Element} the rendered documents list
+   */
   return (
     <Card>
       <CardHeader>
@@ -138,20 +212,32 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                   <Badge variant="outline" className="bg-green-50 text-green-700">
                     Verified
                   </Badge>
+                ) : doc.verificationStatus === 'REJECTED' ? (
+                  <Badge variant="outline" className="bg-red-50 text-red-700">
+                    Rejected
+                  </Badge>
                 ) : (
-                  <Dialog>
+                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+                    Pending Verification
+                  </Badge>
+                )}
+                <Dialog>
                     <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setSelectedDocument({
+                          id: doc.id,
                           name: getDocumentTypeName(doc.documentType),
                           type: doc.fileName.split('.').pop() || 'unknown',
                           size: formatFileSize(doc.fileSize),
-                          verified: doc.verificationStatus === 'VERIFIED'
+                          verified: doc.verificationStatus === 'VERIFIED',
+                          rejectionReason: doc.rejectionReason,
+                          verifiedBy: doc.verifiedBy,
+                          verifiedAt: doc.verifiedAt
                         })}
                       >
-                        Verify
+                        Check
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md">
@@ -161,7 +247,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                           Review and verify "{getDocumentTypeName(doc.documentType)}" or reject it with a reason.
                         </DialogDescription>
                       </DialogHeader>
-                      
+
                       <div className="flex flex-col space-y-4 py-4">
                         <div className="flex items-center space-x-4">
                           <FileText className="h-8 w-8 text-primary" />
@@ -170,13 +256,19 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                             <p className="text-sm text-muted-foreground">{doc.fileName} • {formatFileSize(doc.fileSize)}</p>
                           </div>
                         </div>
-                        
+
                         <div className="border rounded-md p-4">
                           <p className="text-sm">Document preview would appear here in a real application.</p>
                           <p className="text-sm text-muted-foreground mt-2">File: {doc.fileName}</p>
                           <p className="text-sm text-muted-foreground">Size: {formatFileSize(doc.fileSize)}</p>
                         </div>
-                        
+
+                        {selectedDocument?.rejectionReason && (
+                          <div className="border rounded-md p-4 bg-red-500/10">
+                            <p className="text-sm">Rejection Reason:</p>
+                            <p className="text-sm text-muted-foreground">{selectedDocument?.rejectionReason}</p>
+                          </div>
+                        )}
                         <Textarea
                           placeholder="Reason for rejection (required if rejecting)"
                           value={rejectionReason}
@@ -184,17 +276,17 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                           className="min-h-[100px]"
                         />
                       </div>
-                      
+
                       <DialogFooter className="flex justify-between sm:justify-between">
-                        <Button 
-                          variant="destructive" 
+                        <Button
+                          variant="destructive"
                           onClick={handleDocumentReject}
                           disabled={!rejectionReason.trim()}
                         >
                           <XCircle className="h-4 w-4 mr-2" />
                           Reject
                         </Button>
-                        <Button 
+                        <Button
                           onClick={handleDocumentVerify}
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
@@ -203,7 +295,6 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                )}
                 <Button variant="ghost" size="icon" onClick={() => window.open(doc.filePath, '_blank')}>
                   <Download className="h-4 w-4" />
                 </Button>
@@ -211,7 +302,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
             </div>
           ))}
         </div>
-        
+
         <div className="mt-6">
           <Dialog>
             <DialogTrigger asChild>
@@ -224,7 +315,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                   Specify which document you need from the applicant.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="flex flex-col space-y-4 py-4">
                 <div>
                   <label htmlFor="documentName" className="text-sm font-medium mb-1 block">
@@ -237,7 +328,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                     onChange={(e) => setRequestDocumentName(e.target.value)}
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="documentDetails" className="text-sm font-medium mb-1 block">
                     Additional Details (Optional)
@@ -251,9 +342,9 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
                   />
                 </div>
               </div>
-              
+
               <DialogFooter>
-                <Button 
+                <Button
                   onClick={handleRequestDocument}
                   disabled={!requestDocumentName.trim()}
                 >

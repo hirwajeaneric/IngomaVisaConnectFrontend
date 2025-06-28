@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
 import { generatePDF } from "@/lib/report-generator";
 import { toast } from "@/hooks/use-toast";
@@ -26,9 +26,10 @@ const AdminApplicationDetail = () => {
   const [processingStatus, setProcessingStatus] = useState("under-review");
   const [notes, setNotes] = useState("");
   const [interviewDate, setInterviewDate] = useState("");
-  const [documents, setDocuments] = useState([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const queryClient = useQueryClient();
 
-  const { data: applicationData, isLoading, error } = useQuery({
+  const { data: applicationData, isLoading, error, refetch } = useQuery({
     queryKey: ["application", id],
     queryFn: () => visaApplicationService.getApplicationById(id as string),
   });
@@ -124,8 +125,26 @@ const AdminApplicationDetail = () => {
     }
   };
 
-  const handleDocumentUpdate = (updatedDocuments) => {
-    setDocuments(updatedDocuments);
+  const handleDocumentUpdate = async (updatedDocuments: Document[] | null) => {
+    if (updatedDocuments === null) {
+      // This indicates we need to refetch from the server
+      try {
+        await refetch();
+        toast({
+          title: "Documents Refreshed",
+          description: "Document list has been updated from the server.",
+        });
+      } catch (error) {
+        toast({
+          title: "Refresh Failed",
+          description: "Failed to refresh documents. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // Update local state with the new document data
+      setDocuments(updatedDocuments);
+    }
   };
 
   const applicantName = `${application.personalInfo.firstName} ${application.personalInfo.lastName}`;

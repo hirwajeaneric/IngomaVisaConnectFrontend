@@ -1,11 +1,15 @@
 export interface Document {
   id: string;
+  applicationId: string;
   documentType: string;
   fileName: string;
   fileSize: number;
   filePath: string;
   uploadDate: string;
   verificationStatus: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  rejectionReason?: string;
 }
 
 export interface Message {
