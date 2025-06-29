@@ -1,6 +1,8 @@
 import apiClient from '../config';
 
 export interface CreateInterviewData {
+  applicationId: string;
+  assignedOfficerId: string;
   scheduledDate: string;
   location: string;
   notes?: string;
@@ -47,6 +49,31 @@ export interface Interview {
     email: string;
     role: string;
   };
+  scheduler?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
+export interface Officer {
+  id: string;
+  name: string;
+  email: string;
+  department?: string;
+  title?: string;
+}
+
+export interface ApplicationForInterview {
+  id: string;
+  applicationNumber: string;
+  applicantName: string;
+  applicantEmail: string;
+  visaTypeName: string;
+  visaTypeId: string;
+  status: string;
+  submissionDate?: string;
 }
 
 export interface ApiResponse<T> {
@@ -62,9 +89,9 @@ const getAuthHeader = () => {
 
 export const interviewService = {
   // Create a new interview (officer only)
-  createInterview: async (applicationId: string, data: CreateInterviewData): Promise<ApiResponse<Interview>> => {
+  createInterview: async (data: CreateInterviewData): Promise<ApiResponse<Interview>> => {
     const response = await apiClient.post(
-      `/interviews/${applicationId}`,
+      `/interviews/create`,
       data,
       { headers: getAuthHeader() }
     );
@@ -141,6 +168,24 @@ export const interviewService = {
     const response = await apiClient.put(
       `/interviews/${interviewId}/complete`,
       data,
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  },
+
+  // Get officers for assignment
+  getOfficersForAssignment: async (): Promise<ApiResponse<Officer[]>> => {
+    const response = await apiClient.get(
+      `/interviews/officers/assignment`,
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  },
+
+  // Get applications for interview scheduling
+  getApplicationsForInterviewScheduling: async (): Promise<ApiResponse<ApplicationForInterview[]>> => {
+    const response = await apiClient.get(
+      `/interviews/applications/scheduling`,
       { headers: getAuthHeader() }
     );
     return response.data;
