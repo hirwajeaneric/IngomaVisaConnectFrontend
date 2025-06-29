@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video } from "lucide-react";
+import { Clock, Video } from "lucide-react";
 import { Interview } from "@/lib/api/services/interview.service";
 import InterviewCard from "./InterviewCard";
 
@@ -37,7 +37,7 @@ const ApplicationInterview: React.FC<ApplicationInterviewProps> = ({
           </div>
         ) : (
           <div className="text-center py-8">
-            <Video className="h-12 w-12 text-muted-foreground mx-auto opacity-20" />
+            <Clock className="h-12 w-12 text-muted-foreground mx-auto opacity-20" />
             <p className="mt-2 text-muted-foreground">
               No interview has been scheduled yet
             </p>

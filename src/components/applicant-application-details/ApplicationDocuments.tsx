@@ -3,10 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RequestForDocument } from "@/types";
 import { DocumentRequestsList } from "@/components/application-details";
 import DocumentStatusCard from "./DocumentStatusCard";
-import { VisaApplicationResponse } from "@/types";
+import { VisaApplication } from "@/types";
 
 interface ApplicationDocumentsProps {
-  application: VisaApplicationResponse;
+  application: VisaApplication;
   onDocumentRequestsUpdate: (updatedRequests: RequestForDocument[] | null) => void;
   onSubmitDocument: (requestId: string, documentType: string, file: File) => Promise<void>;
 }

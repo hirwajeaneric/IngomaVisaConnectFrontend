@@ -1,13 +1,13 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, FileText } from "lucide-react";
+import { Calendar, Clock, User, FileText, UserRoundCheck } from "lucide-react";
 import { getStatusBadge } from "@/components/widgets";
 import { formatDateTime } from "@/lib/utils";
-import { VisaApplicationResponse } from "@/types";
+import { VisaApplication } from "@/types";
 
 interface ApplicationHeaderProps {
-  application: VisaApplicationResponse;
+  application: VisaApplication;
   onDownloadPDF: () => void;
 }
 
@@ -42,7 +42,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
 
             <div className="flex flex-col mt-4 md:mt-0 md:text-right">
               <p className="text-sm text-muted-foreground">Submitted on</p>
-              <p className="font-medium">{formatDateTime(application.submissionDate)}</p>
+              <p className="font-medium">{formatDateTime(application.submissionDate || '')}</p>
             </div>
           </div>
 
@@ -83,11 +83,11 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
             </div>
 
             <div className="flex items-center">
-              <User className="h-5 w-5 text-muted-foreground mr-3" />
+              <UserRoundCheck className="h-5 w-5 text-muted-foreground mr-3" />
               <div>
-                <p className="text-sm text-muted-foreground">Applicant</p>
+                <p className="text-sm text-muted-foreground">Assigned Officer</p>
                 <p className="font-medium">
-                  {application.personalInfo.firstName} {application.personalInfo.lastName}
+                  {application.officer?.name}
                 </p>
               </div>
             </div>

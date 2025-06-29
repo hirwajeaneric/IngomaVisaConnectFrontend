@@ -46,6 +46,7 @@ export interface VisaApplication {
   userId: string
   officerId?: string
   requestForDocuments?: RequestForDocument[]
+  officer?: Officer;
 }
 
 export interface VisaType {
@@ -130,6 +131,13 @@ export interface Payment {
   updatedAt: string
   refundStatus?: string
   refundReason?: string
+}
+
+export interface Officer {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
 }
 
 export interface RequestForDocument {

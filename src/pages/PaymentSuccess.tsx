@@ -38,6 +38,8 @@ const PaymentSuccess = () => {
         if (response.data.paymentStatus === 'COMPLETED') {
           // Clear the payment ID from localStorage after successful verification
           localStorage.removeItem('current_payment_id');
+          localStorage.removeItem('current_application_id');
+          localStorage.removeItem('selected_visa_type_id');
         } else {
           toast({
             title: "Payment Pending",
