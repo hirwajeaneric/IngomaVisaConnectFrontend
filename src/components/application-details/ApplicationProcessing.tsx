@@ -10,17 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
+import { Calendar } from "lucide-react";
 
 interface ApplicationProcessingProps {
   processingStatus: string;
   setProcessingStatus: (status: string) => void;
   notes: string;
   setNotes: (notes: string) => void;
-  interviewDate: string;
-  setInterviewDate: (date: string) => void;
   onUpdateStatus: () => void;
   onAddNote: () => void;
-  onScheduleInterview: () => void;
 }
 
 export const ApplicationProcessing: React.FC<ApplicationProcessingProps> = ({
@@ -28,12 +27,10 @@ export const ApplicationProcessing: React.FC<ApplicationProcessingProps> = ({
   setProcessingStatus,
   notes,
   setNotes,
-  interviewDate,
-  setInterviewDate,
   onUpdateStatus,
   onAddNote,
-  onScheduleInterview
 }) => {
+  const navigate = useNavigate();
   return (
     <Card>
       <CardHeader>
@@ -44,7 +41,7 @@ export const ApplicationProcessing: React.FC<ApplicationProcessingProps> = ({
           <div>
             <label className="text-sm font-medium">Update Status</label>
             <div className="flex items-center gap-4 mt-1">
-              <Select 
+              <Select
                 value={processingStatus}
                 onValueChange={setProcessingStatus}
               >
@@ -63,30 +60,22 @@ export const ApplicationProcessing: React.FC<ApplicationProcessingProps> = ({
               <Button onClick={onUpdateStatus}>Update</Button>
             </div>
           </div>
-          
+
           <div>
             <label className="text-sm font-medium">Officer Notes</label>
-            <Textarea 
+            <Textarea
               placeholder="Add your notes about this application..."
               className="mt-1"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
-            <Button className="mt-2" variant="outline" onClick={onAddNote}>
-              Add Note
-            </Button>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium">Schedule Interview</label>
-            <div className="flex items-center gap-4 mt-1">
-              <Input 
-                type="datetime-local" 
-                value={interviewDate}
-                onChange={(e) => setInterviewDate(e.target.value)}
-              />
-              <Button variant="outline" onClick={onScheduleInterview}>
-                Schedule
+            <div className="flex items-center justify-between gap-4 mt-1">
+              <Button className="mt-2" variant="outline" onClick={onAddNote}>
+                Add Note
+              </Button>
+              <Button className="mt-2" variant="secondary" onClick={() => navigate('/dashboard/interviews')}>
+                <Calendar className="h-4 w-4 mr-2" />
+                Schedule Interview
               </Button>
             </div>
           </div>

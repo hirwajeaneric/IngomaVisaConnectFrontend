@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
 import { generatePDF } from "@/lib/report-generator";
 import { toast } from "@/hooks/use-toast";
@@ -12,7 +13,6 @@ import {
   ApplicationProcessing,
   ApplicationSummary,
   ApplicantInfo,
-  TravelInfo,
   DocumentsList,
   DocumentRequestsList,
   MessagesTab,
@@ -26,10 +26,8 @@ const AdminApplicationDetail = () => {
   const [currentTab, setCurrentTab] = useState("overview");
   const [processingStatus, setProcessingStatus] = useState("under-review");
   const [notes, setNotes] = useState("");
-  const [interviewDate, setInterviewDate] = useState("");
   const [documents, setDocuments] = useState<Document[]>([]);
   const [documentRequests, setDocumentRequests] = useState<any[]>([]);
-  const queryClient = useQueryClient();
 
   const { data: applicationData, isLoading, error, refetch } = useQuery({
     queryKey: ["application", id],
@@ -83,14 +81,6 @@ const AdminApplicationDetail = () => {
       console.log(`Adding note to application ${id}: ${notes}`);
       alert("Note added successfully!");
       setNotes("");
-    }
-  };
-
-  const handleScheduleInterview = () => {
-    if (interviewDate) {
-      console.log(`Scheduling interview for application ${id} on ${interviewDate}`);
-      alert(`Interview scheduled for: ${interviewDate}`);
-      setProcessingStatus("interview-scheduled");
     }
   };
 
@@ -213,11 +203,8 @@ const AdminApplicationDetail = () => {
                 setProcessingStatus={setProcessingStatus}
                 notes={notes}
                 setNotes={setNotes}
-                interviewDate={interviewDate}
-                setInterviewDate={setInterviewDate}
                 onUpdateStatus={handleUpdateStatus}
                 onAddNote={handleAddNote}
-                onScheduleInterview={handleScheduleInterview}
               />
               <ApplicationSummary application={application} />
             </div>

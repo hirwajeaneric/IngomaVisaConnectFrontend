@@ -5,7 +5,6 @@ import {
   Calendar, 
   Clock, 
   FileText, 
-  MessageSquare, 
   CheckCircle, 
   User
 } from "lucide-react";
