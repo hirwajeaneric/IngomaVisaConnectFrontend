@@ -7,6 +7,7 @@ export { DocumentRequestsList } from './DocumentRequestsList';
 export { MessagesTab } from './MessagesTab';
 export { PaymentInfo } from './PaymentInfo';
 export { ApplicationTravelInfo } from './TravelInfo';
+export { default as ApplicationInterviews } from './ApplicationInterviews';
 
 // Types
 export type { 

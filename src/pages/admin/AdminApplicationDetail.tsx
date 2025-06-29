@@ -5,6 +5,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { visaApplicationService } from "@/lib/api/services/visaapplication.service";
+import { interviewService } from "@/lib/api/services/interview.service";
 import { generatePDF } from "@/lib/report-generator";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
@@ -17,7 +18,8 @@ import {
   DocumentRequestsList,
   MessagesTab,
   PaymentInfo,
-  ApplicationTravelInfo
+  ApplicationTravelInfo,
+  ApplicationInterviews
 } from "@/components/application-details";
 import { Document } from "@/components/application-details/types";
 
@@ -33,6 +35,15 @@ const AdminApplicationDetail = () => {
     queryKey: ["application", id],
     queryFn: () => visaApplicationService.getApplicationById(id as string),
   });
+
+  // Fetch interviews for this application
+  const { data: interviewsResponse } = useQuery({
+    queryKey: ['application-interviews', id],
+    queryFn: () => interviewService.getApplicationInterviews(id as string),
+    enabled: !!id
+  });
+
+  const interviews = interviewsResponse?.data || [];
 
   // Update documents state when application data loads
   React.useEffect(() => {
@@ -191,6 +202,7 @@ const AdminApplicationDetail = () => {
             <TabsTrigger value="applicant">Applicant</TabsTrigger>
             <TabsTrigger value="travel">Travel Info</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="interviews">Interviews</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="payment">Payment</TabsTrigger>
           </TabsList>
@@ -239,6 +251,13 @@ const AdminApplicationDetail = () => {
                 userRole="OFFICER"
               />
             </div>
+          </TabsContent>
+          
+          {/* Interviews Tab */}
+          <TabsContent value="interviews">
+            <ApplicationInterviews 
+              interviews={interviews}
+            />
           </TabsContent>
           
           {/* Messages Tab */}
