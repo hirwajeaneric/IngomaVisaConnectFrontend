@@ -27,15 +27,6 @@ const AdminUserDetail = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   
-  // Mock activity logs (since they're not in the API yet)
-  const activityLogs = [
-    { id: "log-1", action: "Logged in", date: "2025-05-15 09:15:22", ipAddress: "192.168.1.1" },
-    { id: "log-2", action: "Approved visa application APP-1254", date: "2025-05-14 16:42:10", ipAddress: "192.168.1.1" },
-    { id: "log-3", action: "Modified system settings", date: "2025-05-14 14:30:05", ipAddress: "192.168.1.1" },
-    { id: "log-4", action: "Sent message to applicant", date: "2025-05-13 11:20:33", ipAddress: "192.168.1.1" },
-    { id: "log-5", action: "Logged in", date: "2025-05-13 09:05:17", ipAddress: "192.168.1.1" }
-  ];
-  
   // All available permissions
   const availablePermissions = {
     applications: [
@@ -333,7 +324,6 @@ const AdminUserDetail = () => {
             <TabsList className="mb-4">
               <TabsTrigger value="profile">Profile Information</TabsTrigger>
               <TabsTrigger value="permissions">Permissions</TabsTrigger>
-              <TabsTrigger value="activity">Activity Log</TabsTrigger>
             </TabsList>
             
             {/* Profile Tab */}
@@ -477,45 +467,6 @@ const AdminUserDetail = () => {
                     ))}
                   </div>
                 </CardContent>
-              </Card>
-            </TabsContent>
-            
-            {/* Activity Tab */}
-            <TabsContent value="activity">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <Clock className="mr-2 h-5 w-5 text-primary" />
-                    Activity Log
-                  </CardTitle>
-                  <CardDescription>Recent user activity</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Action</TableHead>
-                        <TableHead>Date & Time</TableHead>
-                        <TableHead>IP Address</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activityLogs.map((log) => (
-                        <TableRow key={log.id}>
-                          <TableCell>{log.action}</TableCell>
-                          <TableCell>{log.date}</TableCell>
-                          <TableCell>{log.ipAddress}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Download Full Activity Log
-                  </Button>
-                </CardFooter>
               </Card>
             </TabsContent>
           </Tabs>
