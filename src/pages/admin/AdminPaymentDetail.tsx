@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,8 @@ const AdminPaymentDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchPayment = async () => {
       if (!id) return;
@@ -261,7 +262,7 @@ const AdminPaymentDetail = () => {
               </div>
               
               <div className="mt-6">
-                <Button className="w-full">View Linked Application</Button>
+                <Button className="w-full" onClick={() => navigate(`/dashboard/application/${payment.application.id}`)}>View Linked Application</Button>
               </div>
             </CardContent>
           </Card>
