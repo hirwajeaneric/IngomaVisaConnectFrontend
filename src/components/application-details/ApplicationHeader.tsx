@@ -42,10 +42,6 @@ export const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
               <FileText className="h-4 w-4" />
               Export PDF
             </Button>
-            <Button className="gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Approve
-            </Button>
           </div>
         </div>
         

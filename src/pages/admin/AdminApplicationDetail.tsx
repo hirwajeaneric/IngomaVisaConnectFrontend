@@ -26,8 +26,6 @@ import { Document } from "@/components/application-details/types";
 const AdminApplicationDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [currentTab, setCurrentTab] = useState("overview");
-  const [processingStatus, setProcessingStatus] = useState("under-review");
-  const [notes, setNotes] = useState("");
   const [documents, setDocuments] = useState<Document[]>([]);
   const [documentRequests, setDocumentRequests] = useState<any[]>([]);
 
@@ -84,17 +82,9 @@ const AdminApplicationDetail = () => {
     );
   }
 
-  const handleUpdateStatus = () => {
-    console.log(`Updating application ${id} status to ${processingStatus}`);
-    alert(`Application status updated to: ${processingStatus}`);
-  };
-
-  const handleAddNote = () => {
-    if (notes.trim()) {
-      console.log(`Adding note to application ${id}: ${notes}`);
-      alert("Note added successfully!");
-      setNotes("");
-    }
+  const handleStatusUpdate = (newStatus: string) => {
+    // Refetch application data to get updated status
+    refetch();
   };
 
   const handleExportPDF = async () => {
@@ -114,7 +104,8 @@ const AdminApplicationDetail = () => {
           hour: '2-digit',
           minute: '2-digit',
         }),
-        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Coat_of_arms_of_Burundi.svg/250px-Coat_of_arms_of_Burundi.svg.png'
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Coat_of_arms_of_Burundi.svg/250px-Coat_of_arms_of_Burundi.svg.png',
+        applicationData: application // Pass real application data
       };
       
       await generatePDF(reportData);
@@ -213,12 +204,9 @@ const AdminApplicationDetail = () => {
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ApplicationProcessing 
-                processingStatus={processingStatus}
-                setProcessingStatus={setProcessingStatus}
-                notes={notes}
-                setNotes={setNotes}
-                onUpdateStatus={handleUpdateStatus}
-                onAddNote={handleAddNote}
+                applicationId={application.id}
+                currentStatus={application.status}
+                onStatusUpdate={handleStatusUpdate}
               />
               <ApplicationSummary application={application} />
             </div>

@@ -11,10 +11,11 @@ interface ReportData {
   reportType: string;
   generatedAt: string;
   logoUrl: string;
+  applicationData?: any; // Real application data for detailed reports
 }
 
 // Sample data for reports based on report type
-const getSampleData = (reportType: string) => {
+const getSampleData = (reportType: string, applicationData?: any) => {
   switch (reportType) {
     case 'applications':
     case 'all_applications':
@@ -59,22 +60,60 @@ const getSampleData = (reportType: string) => {
         ])
       };
     case 'application_detail':
-      return {
-        headers: ['Field', 'Value'],
-        rows: [
-          ['Application ID', 'APP-2354'],
-          ['Applicant Name', 'John Smith'],
-          ['Visa Type', 'Tourist'],
-          ['Status', 'Under Review'],
-          ['Submission Date', format(new Date(), 'MMM dd, yyyy')],
-          ['Passport Number', 'US12345678'],
-          ['Nationality', 'United States'],
-          ['Entry Date', format(new Date(2025, 5, 20), 'MMM dd, yyyy')],
-          ['Exit Date', format(new Date(2025, 6, 5), 'MMM dd, yyyy')],
-          ['Purpose of Visit', 'Tourism and wildlife photography'],
-          ['Accommodation', 'Kiriri Garden Hotel, Bujumbura'],
-        ]
-      };
+      if (applicationData) {
+        // Use real application data
+        const app = applicationData;
+        const personalInfo = app.personalInfo || {};
+        const travelInfo = app.travelInfo || {};
+        
+        return {
+          headers: ['Field', 'Value'],
+          rows: [
+            ['Application ID', app.applicationNumber || 'N/A'],
+            ['Applicant Name', `${personalInfo.firstName || ''} ${personalInfo.lastName || ''}`.trim() || 'N/A'],
+            ['Visa Type', app.visaType?.name || 'N/A'],
+            ['Status', app.status?.replace('_', ' ').toUpperCase() || 'N/A'],
+            ['Submission Date', app.submissionDate ? format(new Date(app.submissionDate), 'MMM dd, yyyy') : 'N/A'],
+            ['Passport Number', personalInfo.passportNumber || 'N/A'],
+            ['Nationality', personalInfo.nationality || 'N/A'],
+            ['Date of Birth', personalInfo.dateOfBirth ? format(new Date(personalInfo.dateOfBirth), 'MMM dd, yyyy') : 'N/A'],
+            ['Gender', personalInfo.gender || 'N/A'],
+            ['Email', personalInfo.email || 'N/A'],
+            ['Phone', personalInfo.phone || 'N/A'],
+            ['Address', personalInfo.address || 'N/A'],
+            ['City', personalInfo.city || 'N/A'],
+            ['Country', personalInfo.country || 'N/A'],
+            ['Purpose of Travel', travelInfo.purposeOfTravel || 'N/A'],
+            ['Entry Date', travelInfo.entryDate ? format(new Date(travelInfo.entryDate), 'MMM dd, yyyy') : 'N/A'],
+            ['Exit Date', travelInfo.exitDate ? format(new Date(travelInfo.exitDate), 'MMM dd, yyyy') : 'N/A'],
+            ['Port of Entry', travelInfo.portOfEntry || 'N/A'],
+            ['Previous Visits', travelInfo.previousVisits ? 'Yes' : 'No'],
+            ['Accommodation Details', travelInfo.accommodationDetails || 'N/A'],
+            ['Travel Itinerary', travelInfo.travelItinerary || 'N/A'],
+            ['Payment Status', app.payment?.status || 'N/A'],
+            ['Payment Amount', app.payment ? `$${app.payment.amount}` : 'N/A'],
+            ['Documents Submitted', app.documents?.length || 0],
+          ]
+        };
+      } else {
+        // Fallback to sample data
+        return {
+          headers: ['Field', 'Value'],
+          rows: [
+            ['Application ID', 'APP-2354'],
+            ['Applicant Name', 'John Smith'],
+            ['Visa Type', 'Tourist'],
+            ['Status', 'Under Review'],
+            ['Submission Date', format(new Date(), 'MMM dd, yyyy')],
+            ['Passport Number', 'US12345678'],
+            ['Nationality', 'United States'],
+            ['Entry Date', format(new Date(2025, 5, 20), 'MMM dd, yyyy')],
+            ['Exit Date', format(new Date(2025, 6, 5), 'MMM dd, yyyy')],
+            ['Purpose of Visit', 'Tourism and wildlife photography'],
+            ['Accommodation', 'Kiriri Garden Hotel, Bujumbura'],
+          ]
+        };
+      }
     default:
       return {
         headers: ['Item ID', 'Description', 'Value', 'Category', 'Date'],
@@ -91,10 +130,10 @@ const getSampleData = (reportType: string) => {
 
 // Generate and download a PDF report
 export const generatePDF = async (data: ReportData) => {
-  const { title, dateRange, includeDetails, reportType, generatedAt, logoUrl } = data;
+  const { title, dateRange, includeDetails, reportType, generatedAt, logoUrl, applicationData } = data;
   
   // Get sample data for the report type
-  const sampleData = getSampleData(reportType);
+  const sampleData = getSampleData(reportType, applicationData);
   
   // Create a new window/tab for the PDF (in a real app, we'd use a PDF library like jsPDF)
   const reportWindow = window.open('', '_blank');

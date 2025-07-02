@@ -119,13 +119,6 @@ export const ApplicantInfo: React.FC<ApplicantInfoProps> = ({
                 </div>
               </div>
             </div>
-            
-            <div className="mt-6 flex space-x-4">
-              <Button variant="outline" className="gap-2">
-                <AlertCircle className="h-4 w-4" />
-                Flag for Review
-              </Button>
-            </div>
           </div>
         </div>
       </CardContent>

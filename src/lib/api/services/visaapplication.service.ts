@@ -374,5 +374,30 @@ export const visaApplicationService = {
       throw new Error(message);
     }
     return response.data;
+  },
+
+  // Update application status (admin/officer only)
+  updateApplicationStatus: async (
+    applicationId: string, 
+    status: string, 
+    rejectionReason?: string
+  ): Promise<ApiResponse<VisaApplication>> => {
+    let response;
+    try {
+      const payload: any = { status };
+      if (rejectionReason) {
+        payload.rejectionReason = rejectionReason;
+      }
+      
+      response = await apiClient.put<ApiResponse<VisaApplication>>(
+        `/applications/${applicationId}/status`,
+        payload,
+        { headers: getAuthHeader() }
+      );
+    } catch (error: any) {
+      const { message } = error.response?.data || { message: 'Failed to update application status' };
+      throw new Error(message);
+    }
+    return response.data;
   }
 }; 
