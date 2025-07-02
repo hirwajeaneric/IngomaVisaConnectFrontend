@@ -36,6 +36,8 @@ const AdminApplicationDetail = () => {
     queryFn: () => visaApplicationService.getApplicationById(id as string),
   });
 
+  console.log(applicationData);
+
   // Fetch interviews for this application
   const { data: interviewsResponse } = useQuery({
     queryKey: ['application-interviews', id],

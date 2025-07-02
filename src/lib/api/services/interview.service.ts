@@ -82,112 +82,72 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-const getAuthHeader = () => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+// Note: apiClient automatically handles authentication via interceptors
 
 export const interviewService = {
   // Create a new interview (officer only)
   createInterview: async (data: CreateInterviewData): Promise<ApiResponse<Interview>> => {
-    const response = await apiClient.post(
-      `/interviews/create`,
-      data,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.post(`/interviews/create`, data);
     return response.data;
   },
 
   // Get a specific interview by ID
   getInterviewById: async (interviewId: string): Promise<ApiResponse<Interview>> => {
-    const response = await apiClient.get(
-      `/interviews/${interviewId}`,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.get(`/interviews/${interviewId}`);
     return response.data;
   },
 
   // Get all interviews for an application
   getApplicationInterviews: async (applicationId: string): Promise<ApiResponse<Interview[]>> => {
-    const response = await apiClient.get(
-      `/interviews/application/${applicationId}`,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.get(`/interviews/application/${applicationId}`);
     return response.data;
   },
 
   // Get all interviews scheduled by an officer
   getOfficerInterviews: async (): Promise<ApiResponse<Interview[]>> => {
-    const response = await apiClient.get(
-      `/interviews/officer/all`,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.get(`/interviews/officer/all`);
     return response.data;
   },
 
   // Get all interviews for the current applicant
   getApplicantInterviews: async (): Promise<ApiResponse<Interview[]>> => {
-    const response = await apiClient.get(
-      `/interviews/applicant/all`,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.get(`/interviews/applicant/all`);
     return response.data;
   },
 
   // Reschedule an interview (officer only)
   rescheduleInterview: async (interviewId: string, data: UpdateInterviewData): Promise<ApiResponse<Interview>> => {
-    const response = await apiClient.put(
-      `/interviews/${interviewId}/reschedule`,
-      data,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.put(`/interviews/${interviewId}/reschedule`, data);
     return response.data;
   },
 
   // Cancel an interview (officer only)
   cancelInterview: async (interviewId: string): Promise<ApiResponse<Interview>> => {
-    const response = await apiClient.delete(
-      `/interviews/${interviewId}`,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.delete(`/interviews/${interviewId}`);
     return response.data;
   },
 
   // Confirm an interview (applicant only)
   confirmInterview: async (interviewId: string): Promise<ApiResponse<Interview>> => {
-    const response = await apiClient.post(
-      `/interviews/${interviewId}/confirm`,
-      {},
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.post(`/interviews/${interviewId}/confirm`, {});
     return response.data;
   },
 
   // Mark an interview as completed (officer only)
   markInterviewCompleted: async (interviewId: string, data: MarkInterviewCompletedData): Promise<ApiResponse<Interview>> => {
-    const response = await apiClient.put(
-      `/interviews/${interviewId}/complete`,
-      data,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.put(`/interviews/${interviewId}/complete`, data);
     return response.data;
   },
 
   // Get officers for assignment
   getOfficersForAssignment: async (): Promise<ApiResponse<Officer[]>> => {
-    const response = await apiClient.get(
-      `/interviews/officers/assignment`,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.get(`/interviews/officers/assignment`);
     return response.data;
   },
 
   // Get applications for interview scheduling
   getApplicationsForInterviewScheduling: async (): Promise<ApiResponse<ApplicationForInterview[]>> => {
-    const response = await apiClient.get(
-      `/interviews/applications/scheduling`,
-      { headers: getAuthHeader() }
-    );
+    const response = await apiClient.get(`/interviews/applications/scheduling`);
     return response.data;
   },
 }; 

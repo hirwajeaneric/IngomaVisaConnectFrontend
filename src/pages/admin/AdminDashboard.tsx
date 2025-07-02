@@ -1,7 +1,7 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   BarChart,
   Bar,
@@ -24,137 +24,114 @@ import {
   FileText, 
   Clock, 
   CheckCircle,
+  Loader2,
 } from "lucide-react";
+import { dashboardService, DashboardStats, MonthlyApplication, VisaTypeDistribution, StatusTrend } from "@/lib/api/services/dashboard.service";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminDashboard = () => {
-  // Mock data for charts
-  const visaApplicationsData = [
-    { month: "Jan", applications: 65 },
-    { month: "Feb", applications: 59 },
-    { month: "Mar", applications: 80 },
-    { month: "Apr", applications: 81 },
-    { month: "May", applications: 56 },
-    { month: "Jun", applications: 55 },
-  ];
-
-  const visaTypeData = [
-    { name: "Tourist", value: 45 },
-    { name: "Business", value: 28 },
-    { name: "Work", value: 17 },
-    { name: "Student", value: 8 },
-    { name: "Transit", value: 2 },
-  ];
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [monthlyApplications, setMonthlyApplications] = useState<MonthlyApplication[]>([]);
+  const [visaTypeData, setVisaTypeData] = useState<VisaTypeDistribution[]>([]);
+  const [statusData, setStatusData] = useState<StatusTrend[]>([]);
+  const { toast } = useToast();
 
   const COLORS = ["#CE1126", "#1EB53A", "#0052A5", "#FFC107", "#6C757D"];
 
-  const statusData = [
-    { name: "Jan", pending: 30, approved: 40, rejected: 5 },
-    { name: "Feb", pending: 25, approved: 30, rejected: 4 },
-    { name: "Mar", pending: 35, approved: 35, rejected: 10 },
-    { name: "Apr", pending: 40, approved: 38, rejected: 3 },
-    { name: "May", pending: 22, approved: 30, rejected: 4 },
-    { name: "Jun", pending: 28, approved: 25, rejected: 2 },
-  ];
+  // Generate year options (current year and 4 years back)
+  const yearOptions = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
-  // Mock summary stats
-  const summaryStats = [
+  const fetchDashboardData = async (year: number) => {
+    try {
+      setLoading(true);
+      console.log(`Fetching dashboard data for year: ${year}`);
+
+      const [statsData, monthlyData, visaTypeData, statusData] = await Promise.all([
+        dashboardService.getDashboardStats(year),
+        dashboardService.getMonthlyApplications(year),
+        dashboardService.getVisaTypeDistribution(year),
+        dashboardService.getApplicationStatusTrends(year)
+      ]);
+
+      setStats(statsData);
+      setMonthlyApplications(monthlyData);
+      setVisaTypeData(visaTypeData);
+      setStatusData(statusData);
+
+      console.log('Dashboard data loaded successfully:', {
+        stats: statsData,
+        monthly: monthlyData,
+        visaTypes: visaTypeData,
+        status: statusData
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData(selectedYear);
+  }, [selectedYear]);
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(parseInt(year));
+  };
+
+  const summaryStats = stats ? [
     {
       title: "Total Applications",
-      value: 432,
-      change: "+12.5%",
-      status: "increase",
+      value: stats.totalApplications,
+      change: `${stats.applicationChange >= 0 ? '+' : ''}${stats.applicationChange}%`,
+      status: stats.applicationChange >= 0 ? "increase" : "decrease",
       icon: <FileText className="h-6 w-6 text-primary" />,
     },
     {
-      title: "Approval Rate",
-      value: "87.2%",
-      change: "+2.3%",
-      status: "increase",
+      title: "Pending Applications",
+      value: `${stats.pendingPercentage}%`,
+      change: `${stats.pendingApplications} applications`,
+      status: "neutral",
       icon: <CheckCircle className="h-6 w-6 text-secondary" />,
     },
     {
-      title: "Processing Time",
-      value: "4.2 days",
-      change: "-0.8 days",
-      status: "decrease",
+      title: "Average Processing Time",
+      value: `${stats.avgProcessingDays} days`,
+      change: "Based on completed applications",
+      status: "neutral",
       icon: <Clock className="h-6 w-6 text-amber-500" />,
     },
     {
       title: "Active Users",
-      value: 521,
-      change: "+5.1%",
-      status: "increase",
+      value: stats.totalUsers,
+      change: `${stats.userChange >= 0 ? '+' : ''}${stats.userChange}%`,
+      status: stats.userChange >= 0 ? "increase" : "decrease",
       icon: <Users className="h-6 w-6 text-blue-500" />,
     },
-  ];
+  ] : [];
 
-  const recentApplications = [
-    {
-      id: "APP-1254",
-      name: "John Smith",
-      nationality: "United States",
-      visaType: "Tourist",
-      submissionDate: "2025-05-12",
-      status: "Pending Review",
-    },
-    {
-      id: "APP-1253",
-      name: "Maria Garcia",
-      nationality: "Spain",
-      visaType: "Work",
-      submissionDate: "2025-05-11",
-      status: "Under Review",
-    },
-    {
-      id: "APP-1252",
-      name: "Ahmed Hassan",
-      nationality: "Egypt",
-      visaType: "Student",
-      submissionDate: "2025-05-10",
-      status: "Additional Docs Requested",
-    },
-    {
-      id: "APP-1251",
-      name: "Tanaka Ito",
-      nationality: "Japan",
-      visaType: "Business",
-      submissionDate: "2025-05-09",
-      status: "Approved",
-    },
-    {
-      id: "APP-1250",
-      name: "Sarah Johnson",
-      nationality: "Canada",
-      visaType: "Tourist",
-      submissionDate: "2025-05-09",
-      status: "Rejected",
-    },
-  ];
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'pending review':
-        return 'bg-blue-100 text-blue-800';
-      case 'under review':
-        return 'bg-amber-100 text-amber-800';
-      case 'additional docs requested':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  if (loading) {
+    return (
+      <AdminLayout 
+        title="Dashboard" 
+        subtitle="Overview of visa applications and system performance"
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading dashboard data...</span>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout 
@@ -162,6 +139,26 @@ const AdminDashboard = () => {
       subtitle="Overview of visa applications and system performance"
     >
       <div className="space-y-6">
+        {/* Year Selector */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Dashboard Overview</h2>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">Year:</span>
+            <Select value={selectedYear.toString()} onValueChange={handleYearChange}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {yearOptions.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Summary Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {summaryStats.map((stat, index) => (
@@ -181,17 +178,21 @@ const AdminDashboard = () => {
                 <div className="mt-4 flex items-center text-sm">
                   {stat.status === "increase" ? (
                     <ArrowUpCircle className="h-4 w-4 text-secondary mr-1" />
-                  ) : (
+                  ) : stat.status === "decrease" ? (
                     <ArrowDownCircle className="h-4 w-4 text-primary mr-1" />
-                  )}
+                  ) : null}
                   <span
                     className={
-                      stat.status === "increase" ? "text-secondary" : "text-primary"
+                      stat.status === "increase" ? "text-secondary" : 
+                      stat.status === "decrease" ? "text-primary" : 
+                      "text-muted-foreground"
                     }
                   >
                     {stat.change}
                   </span>
-                  <span className="text-muted-foreground ml-1">from last month</span>
+                  {stat.status !== "neutral" && (
+                    <span className="text-muted-foreground ml-1">from last month</span>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -209,7 +210,7 @@ const AdminDashboard = () => {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={visaApplicationsData}
+                    data={monthlyApplications}
                     margin={{
                       top: 5,
                       right: 30,
@@ -309,68 +310,7 @@ const AdminDashboard = () => {
               </ResponsiveContainer>
             </div>
           </CardContent>
-        </Card>
-
-        {/* Recent Applications */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Recent Applications</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Application ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Applicant
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nationality
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Visa Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Submission Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {recentApplications.map((application) => (
-                    <tr key={application.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
-                        {application.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {application.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {application.nationality}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {application.visaType}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(application.submissionDate)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(application.status)}`}>
-                          {application.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        </Card>        
       </div>
     </AdminLayout>
   );

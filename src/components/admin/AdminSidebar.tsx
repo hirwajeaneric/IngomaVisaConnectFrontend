@@ -115,7 +115,7 @@ export const AdminSidebar = () => {
       label: "Settings", 
       icon: <Settings className="h-5 w-5" />, 
       href: "/dashboard/settings",
-      requireAdmin: true,
+      requireAdmin: false,
       requireOfficer: false,
     },
     { 
