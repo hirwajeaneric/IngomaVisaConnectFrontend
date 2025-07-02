@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getCountryName } from "@/lib/utils";
 import { 
   declarationSchema, 
   DeclarationValues, 
@@ -145,13 +146,13 @@ const DeclarationForm = ({
                       <div>
                         <p className="text-sm text-muted-foreground">Nationality</p>
                         <p className="font-medium">
-                          {completeFormData?.personalInfo.nationality || "Not provided"}
+                          {getCountryName(completeFormData?.personalInfo.nationality || "") || "Not provided"}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Country</p>
                         <p className="font-medium">
-                          {completeFormData?.personalInfo.country || "Not provided"}
+                          {getCountryName(completeFormData?.personalInfo.country || "") || "Not provided"}
                         </p>
                       </div>
                       <div>

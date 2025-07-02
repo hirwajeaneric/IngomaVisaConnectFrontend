@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format as formatDate } from "date-fns";
 import { generatePDF, generateExcel } from "@/lib/report-generator";
+import { reportsService } from "@/lib/api/services/reports.service";
 
 interface ReportDownloadProps {
   title: string;
@@ -54,35 +55,53 @@ export const ReportDownload = ({
     
     setLoading(true);
     
-    // Prepare report data
-    const reportData = {
-      title: `${reportTypes.find(t => t.value === reportType)?.label} Report`,
-      dateRange: {
-        from: dateRange.from ? formatDate(dateRange.from, 'MMM dd, yyyy') : 'Not specified',
-        to: dateRange.to ? formatDate(dateRange.to, 'MMM dd, yyyy') : 'Present',
-      },
-      includeDetails,
-      reportType,
-      generatedAt: formatDate(new Date(), 'MMMM dd, yyyy HH:mm'),
-      logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Coat_of_arms_of_Burundi.svg/250px-Coat_of_arms_of_Burundi.svg.png'
-    };
-    
     try {
+      // Fetch real data from backend based on report type
+      let reportData: any[] = [];
+      
+      if (reportType.includes('applications') || reportType === 'approved' || reportType === 'rejected' || reportType === 'pending' || reportType === 'under_review') {
+        const response = await reportsService.getApplicationsReport(reportType, dateRange.from, dateRange.to);
+        reportData = response.data;
+      } else if (reportType.includes('payments') || reportType === 'revenue' || reportType === 'completed' || reportType === 'failed' || reportType === 'refunded') {
+        const response = await reportsService.getPaymentsReport(reportType, dateRange.from, dateRange.to);
+        reportData = response.data;
+      } else if (reportType.includes('users') || reportType === 'applicants' || reportType === 'officers' || reportType === 'admins') {
+        const response = await reportsService.getUsersReport(reportType, dateRange.from, dateRange.to);
+        reportData = response.data;
+      } else if (reportType.includes('interviews') || reportType === 'scheduled' || reportType === 'completed' || reportType === 'cancelled' || reportType === 'no_show') {
+        const response = await reportsService.getInterviewsReport(reportType, dateRange.from, dateRange.to);
+        reportData = response.data;
+      }
+      
+      // Prepare report data
+      const reportConfig = {
+        title: `${reportTypes.find(t => t.value === reportType)?.label} Report`,
+        dateRange: {
+          from: dateRange.from ? formatDate(dateRange.from, 'MMM dd, yyyy') : 'Not specified',
+          to: dateRange.to ? formatDate(dateRange.to, 'MMM dd, yyyy') : 'Present',
+        },
+        includeDetails,
+        reportType,
+        generatedAt: formatDate(new Date(), 'MMMM dd, yyyy HH:mm'),
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Coat_of_arms_of_Burundi.svg/250px-Coat_of_arms_of_Burundi.svg.png',
+        reportData: reportData // Pass real data to report generator
+      };
+      
       // Generate and download the report in the selected format
       if (reportFormat === 'pdf') {
-        await generatePDF(reportData);
+        await generatePDF(reportConfig);
       } else {
-        await generateExcel(reportData);
+        await generateExcel(reportConfig);
       }
       
       toast({
         title: `${reportFormat === 'pdf' ? 'PDF' : 'Excel'} Report Downloaded`,
         description: `Your ${reportTypes.find(t => t.value === reportType)?.label || reportType} report has been generated and downloaded.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error Generating Report",
-        description: "There was an error creating your report. Please try again.",
+        description: error.message || "There was an error creating your report. Please try again.",
         variant: "destructive",
       });
       console.error("Report generation error:", error);

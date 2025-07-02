@@ -24,6 +24,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Edit, ArrowLeft, Trash, CheckCircle, Loader2 } from "lucide-react";
 import { visaTypeService, VisaType } from "@/lib/api/services/visatype.service";
+import { getCountryName } from "@/lib/utils";
 
 const AdminServiceDetail = () => {
   const { id } = useParams();
@@ -251,7 +252,7 @@ const AdminServiceDetail = () => {
                 <div className="flex flex-wrap gap-2">
                   {visaType.eligibleCountries.map((country, index) => (
                     <Badge key={index} variant="secondary">
-                      {country}
+                      {getCountryName(country)}
                     </Badge>
                   ))}
                 </div>

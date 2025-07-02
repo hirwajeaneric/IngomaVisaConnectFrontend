@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getCountryName } from "@/lib/utils";
 import { VisaApplication } from "@/lib/api/services/visaapplication.service";
 
 interface ApplicationSummaryProps {
@@ -28,7 +28,7 @@ export const ApplicationSummary: React.FC<ApplicationSummaryProps> = ({
           </div>
           <div>
             <dt className="text-sm font-medium text-muted-foreground">Nationality</dt>
-            <dd className="mt-1 text-sm">{application.personalInfo?.nationality || 'N/A'}</dd>
+            <dd className="mt-1 text-sm">{getCountryName(application.personalInfo?.nationality || '')}</dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-muted-foreground">Passport</dt>

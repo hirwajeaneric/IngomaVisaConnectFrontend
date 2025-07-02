@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { CreditCard, Download, Calendar, User, FileText, Mail, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { paymentService, PaymentDetail } from "@/lib/api/services/payment.service";
+import { getCountryName } from "@/lib/utils";
 
 const AdminPaymentDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -233,7 +234,7 @@ const AdminPaymentDetail = () => {
                   <p>
                     {payment.billingAddress.city}, {payment.billingAddress.state} {payment.billingAddress.postalCode}
                   </p>
-                  <p>{payment.billingAddress.country}</p>
+                  <p>{getCountryName(payment.billingAddress.country)}</p>
                 </div>
               </div>
             </CardContent>

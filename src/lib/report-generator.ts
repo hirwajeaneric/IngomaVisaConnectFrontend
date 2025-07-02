@@ -1,5 +1,6 @@
 
 import { format } from 'date-fns';
+import { getCountryName } from './utils';
 
 interface ReportData {
   title: string;
@@ -12,53 +13,107 @@ interface ReportData {
   generatedAt: string;
   logoUrl: string;
   applicationData?: any; // Real application data for detailed reports
+  reportData?: any[]; // Real report data from backend
 }
 
 // Sample data for reports based on report type
-const getSampleData = (reportType: string, applicationData?: any) => {
+const getSampleData = (reportType: string, applicationData?: any, reportData?: any[]) => {
   switch (reportType) {
     case 'applications':
     case 'all_applications':
     case 'approved':
     case 'rejected':
     case 'pending':
-      return {
-        headers: ['Application ID', 'Applicant Name', 'Visa Type', 'Status', 'Submission Date'],
-        rows: Array(25).fill(0).map((_, i) => [
-          `APP-${1000 + i}`,
-          `${['John', 'Jane', 'Michael', 'Sarah'][i % 4]} ${['Smith', 'Johnson', 'Williams', 'Brown'][i % 4]}`,
-          ['Tourist', 'Business', 'Work', 'Student', 'Transit'][i % 5],
-          ['Approved', 'Pending', 'Rejected', 'Under Review'][i % 4],
-          format(new Date(2025, i % 12, (i % 28) + 1), 'MMM dd, yyyy')
-        ])
-      };
+    case 'under_review':
+      if (reportData && reportData.length > 0) {
+        // Use real data from backend
+        return {
+          headers: ['Application ID', 'Applicant Name', 'Visa Type', 'Status', 'Submission Date', 'Nationality', 'Purpose of Travel'],
+          rows: reportData.map(item => [
+            item.applicationId || 'N/A',
+            item.applicantName || 'N/A',
+            item.visaType || 'N/A',
+            item.status?.replace('_', ' ').toUpperCase() || 'N/A',
+            item.submissionDate ? format(new Date(item.submissionDate), 'MMM dd, yyyy') : 'N/A',
+            item.nationality || 'N/A',
+            item.purposeOfTravel || 'N/A'
+          ])
+        };
+      } else {
+        // Fallback to sample data
+        return {
+          headers: ['Application ID', 'Applicant Name', 'Visa Type', 'Status', 'Submission Date'],
+          rows: Array(25).fill(0).map((_, i) => [
+            `APP-${1000 + i}`,
+            `${['John', 'Jane', 'Michael', 'Sarah'][i % 4]} ${['Smith', 'Johnson', 'Williams', 'Brown'][i % 4]}`,
+            ['Tourist', 'Business', 'Work', 'Student', 'Transit'][i % 5],
+            ['Approved', 'Pending', 'Rejected', 'Under Review'][i % 4],
+            format(new Date(2025, i % 12, (i % 28) + 1), 'MMM dd, yyyy')
+          ])
+        };
+      }
     case 'payments':
     case 'revenue':
     case 'refunds':
-      return {
-        headers: ['Transaction ID', 'Amount', 'Payment Method', 'Status', 'Date'],
-        rows: Array(25).fill(0).map((_, i) => [
-          `TXN-${2000 + i}`,
-          `$${(50 + i * 15).toFixed(2)}`,
-          ['Credit Card', 'Bank Transfer', 'PayPal', 'Mobile Money'][i % 4],
-          ['Completed', 'Pending', 'Failed', 'Refunded'][i % 4],
-          format(new Date(2025, i % 12, (i % 28) + 1), 'MMM dd, yyyy')
-        ])
-      };
+    case 'completed':
+    case 'failed':
+      if (reportData && reportData.length > 0) {
+        // Use real data from backend
+        return {
+          headers: ['Transaction ID', 'Amount', 'Currency', 'Status', 'Customer Name', 'Application Number', 'Payment Date'],
+          rows: reportData.map(item => [
+            item.transactionId || 'N/A',
+            `$${item.amount?.toFixed(2) || '0.00'}`,
+            item.currency || 'USD',
+            item.status || 'N/A',
+            item.customerName || 'N/A',
+            item.applicationNumber || 'N/A',
+            item.paymentDate ? format(new Date(item.paymentDate), 'MMM dd, yyyy') : 'N/A'
+          ])
+        };
+      } else {
+        // Fallback to sample data
+        return {
+          headers: ['Transaction ID', 'Amount', 'Payment Method', 'Status', 'Date'],
+          rows: Array(25).fill(0).map((_, i) => [
+            `TXN-${2000 + i}`,
+            `$${(50 + i * 15).toFixed(2)}`,
+            ['Credit Card', 'Bank Transfer', 'PayPal', 'Mobile Money'][i % 4],
+            ['Completed', 'Pending', 'Failed', 'Refunded'][i % 4],
+            format(new Date(2025, i % 12, (i % 28) + 1), 'MMM dd, yyyy')
+          ])
+        };
+      }
     case 'users':
     case 'applicants':
     case 'officers':
     case 'admins':
-      return {
-        headers: ['User ID', 'Name', 'Email', 'Role', 'Registration Date'],
-        rows: Array(25).fill(0).map((_, i) => [
-          `USER-${3000 + i}`,
-          `${['John', 'Jane', 'Michael', 'Sarah'][i % 4]} ${['Smith', 'Johnson', 'Williams', 'Brown'][i % 4]}`,
-          `user${i}@example.com`,
-          ['Applicant', 'Officer', 'Admin'][i % 3],
-          format(new Date(2025, i % 12, (i % 28) + 1), 'MMM dd, yyyy')
-        ])
-      };
+      if (reportData && reportData.length > 0) {
+        // Use real data from backend
+        return {
+          headers: ['User ID', 'Name', 'Email', 'Role', 'Applications Count', 'Registration Date'],
+          rows: reportData.map(item => [
+            item.userId || 'N/A',
+            item.name || 'N/A',
+            item.email || 'N/A',
+            item.role || 'N/A',
+            item.applicationsCount?.toString() || '0',
+            item.registrationDate ? format(new Date(item.registrationDate), 'MMM dd, yyyy') : 'N/A'
+          ])
+        };
+      } else {
+        // Fallback to sample data
+        return {
+          headers: ['User ID', 'Name', 'Email', 'Role', 'Registration Date'],
+          rows: Array(25).fill(0).map((_, i) => [
+            `USER-${3000 + i}`,
+            `${['John', 'Jane', 'Michael', 'Sarah'][i % 4]} ${['Smith', 'Johnson', 'Williams', 'Brown'][i % 4]}`,
+            `user${i}@example.com`,
+            ['Applicant', 'Officer', 'Admin'][i % 3],
+            format(new Date(2025, i % 12, (i % 28) + 1), 'MMM dd, yyyy')
+          ])
+        };
+      }
     case 'application_detail':
       if (applicationData) {
         // Use real application data
@@ -75,14 +130,14 @@ const getSampleData = (reportType: string, applicationData?: any) => {
             ['Status', app.status?.replace('_', ' ').toUpperCase() || 'N/A'],
             ['Submission Date', app.submissionDate ? format(new Date(app.submissionDate), 'MMM dd, yyyy') : 'N/A'],
             ['Passport Number', personalInfo.passportNumber || 'N/A'],
-            ['Nationality', personalInfo.nationality || 'N/A'],
+            ['Nationality', getCountryName(personalInfo.nationality || '') || 'N/A'],
             ['Date of Birth', personalInfo.dateOfBirth ? format(new Date(personalInfo.dateOfBirth), 'MMM dd, yyyy') : 'N/A'],
             ['Gender', personalInfo.gender || 'N/A'],
             ['Email', personalInfo.email || 'N/A'],
             ['Phone', personalInfo.phone || 'N/A'],
             ['Address', personalInfo.address || 'N/A'],
             ['City', personalInfo.city || 'N/A'],
-            ['Country', personalInfo.country || 'N/A'],
+            ['Country', getCountryName(personalInfo.country || '') || 'N/A'],
             ['Purpose of Travel', travelInfo.purposeOfTravel || 'N/A'],
             ['Entry Date', travelInfo.entryDate ? format(new Date(travelInfo.entryDate), 'MMM dd, yyyy') : 'N/A'],
             ['Exit Date', travelInfo.exitDate ? format(new Date(travelInfo.exitDate), 'MMM dd, yyyy') : 'N/A'],
@@ -130,10 +185,10 @@ const getSampleData = (reportType: string, applicationData?: any) => {
 
 // Generate and download a PDF report
 export const generatePDF = async (data: ReportData) => {
-  const { title, dateRange, includeDetails, reportType, generatedAt, logoUrl, applicationData } = data;
+  const { title, dateRange, includeDetails, reportType, generatedAt, logoUrl, applicationData, reportData } = data;
   
   // Get sample data for the report type
-  const sampleData = getSampleData(reportType, applicationData);
+  const sampleData = getSampleData(reportType, applicationData, reportData);
   
   // Create a new window/tab for the PDF (in a real app, we'd use a PDF library like jsPDF)
   const reportWindow = window.open('', '_blank');
