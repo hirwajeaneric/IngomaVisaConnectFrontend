@@ -1,12 +1,11 @@
-
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   BarChart,
   Bar,
@@ -25,158 +24,77 @@ import {
   ArrowDownCircle,
   CreditCard,
   Download,
-  Filter,
-  Search,
   Eye,
-  Calendar,
   DollarSign,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
+import { paymentService, Payment, PaymentStats, MonthlyRevenueData } from "@/lib/api/services/payment.service";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 const AdminPayments = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [stats, setStats] = useState<PaymentStats | null>(null);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenueData[]>([]);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const fetchPayments = useCallback(async (status?: string, search?: string) => {
+    try {
+      setLoading(true);
+      const response = await paymentService.getAllPayments({
+        page: 1,
+        limit: 100, // Get more payments for client-side pagination
+        status,
+        search,
+      });
+      setPayments(response.data.payments);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch payments",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
-  // Mock data for payments
-  const payments = [
-    {
-      id: "PAY-5678",
-      applicationId: "APP-2354",
-      applicant: "John Smith",
-      amount: 90.00,
-      currency: "USD",
-      date: "2025-05-14",
-      method: "Credit Card",
-      status: "paid",
-    },
-    {
-      id: "PAY-5677",
-      applicationId: "APP-2353",
-      applicant: "Maria Garcia",
-      amount: 120.00,
-      currency: "USD",
-      date: "2025-05-13",
-      method: "Bank Transfer",
-      status: "paid",
-    },
-    {
-      id: "PAY-5676",
-      applicationId: "APP-2352",
-      applicant: "Liu Wei",
-      amount: 90.00,
-      currency: "USD",
-      date: "2025-05-12",
-      method: "Credit Card",
-      status: "paid",
-    },
-    {
-      id: "PAY-5675",
-      applicationId: "APP-2351",
-      applicant: "Ahmed Hassan",
-      amount: 50.00,
-      currency: "USD",
-      date: "2025-05-11",
-      method: "Mobile Money",
-      status: "paid",
-    },
-    {
-      id: "PAY-5674",
-      applicationId: "APP-2350",
-      applicant: "Tanaka Ito",
-      amount: 120.00,
-      currency: "USD",
-      date: "2025-05-10",
-      method: "Credit Card",
-      status: "paid",
-    },
-    {
-      id: "PAY-5673",
-      applicationId: "APP-2349",
-      applicant: "Sarah Johnson",
-      amount: 90.00,
-      currency: "USD",
-      date: "2025-05-09",
-      method: "PayPal",
-      status: "refunded",
-    },
-    {
-      id: "PAY-5672",
-      applicationId: "APP-2348",
-      applicant: "David Kim",
-      amount: 120.00,
-      currency: "USD",
-      date: "2025-05-08",
-      method: "Bank Transfer",
-      status: "paid",
-    },
-    {
-      id: "PAY-5671",
-      applicationId: "APP-2347",
-      applicant: "Elena Petrova",
-      amount: 40.00,
-      currency: "USD",
-      date: "2025-05-07",
-      method: "Credit Card",
-      status: "failed",
-    },
-  ];
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await paymentService.getPaymentStats();
+      setStats(response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch payment statistics",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
-  // Mock data for revenue chart
-  const revenueData = [
-    { month: "Jan", revenue: 12540 },
-    { month: "Feb", revenue: 10250 },
-    { month: "Mar", revenue: 15900 },
-    { month: "Apr", revenue: 17800 },
-    { month: "May", revenue: 14600 },
-    { month: "Jun", revenue: 11900 },
-  ];
+  const fetchMonthlyRevenue = useCallback(async (year?: number) => {
+    try {
+      const response = await paymentService.getMonthlyRevenue(year || selectedYear);
+      setMonthlyRevenue(response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch monthly revenue data",
+        variant: "destructive",
+      });
+    }
+  }, [selectedYear, toast]);
 
-  // Mock summary stats
-  const summaryStats = [
-    {
-      title: "Monthly Revenue",
-      value: "$14,600",
-      change: "+8.5%",
-      status: "increase",
-      icon: <DollarSign className="h-6 w-6 text-primary" />,
-    },
-    {
-      title: "Transactions",
-      value: "348",
-      change: "+12.3%",
-      status: "increase",
-      icon: <CreditCard className="h-6 w-6 text-secondary" />,
-    },
-    {
-      title: "Average Fee",
-      value: "$94.20",
-      change: "+5.1%",
-      status: "increase",
-      icon: <ArrowUpCircle className="h-6 w-6 text-amber-500" />,
-    },
-    {
-      title: "Refund Rate",
-      value: "2.3%",
-      change: "-0.8%",
-      status: "decrease",
-      icon: <ArrowDownCircle className="h-6 w-6 text-blue-500" />,
-    },
-  ];
-
-  // Filter payments
-  const filteredPayments = payments.filter((payment) => {
-    const matchesSearch = 
-      payment.applicant.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.applicationId.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDateFilter = dateFilter === "all" || true; // Placeholder for date filter logic
-    const matchesStatusFilter = statusFilter === "all" || payment.status === statusFilter;
-    
-    return matchesSearch && matchesDateFilter && matchesStatusFilter;
-  });
+  useEffect(() => {
+    fetchPayments();
+    fetchStats();
+    fetchMonthlyRevenue();
+  }, [fetchPayments, fetchStats, fetchMonthlyRevenue]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -188,7 +106,7 @@ const AdminPayments = () => {
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case "paid":
+      case "completed":
         return <Badge variant="outline" className="bg-green-100 text-green-800">Paid</Badge>;
       case "pending":
         return <Badge variant="outline" className="bg-amber-100 text-amber-800">Pending</Badge>;
@@ -201,43 +119,214 @@ const AdminPayments = () => {
     }
   };
 
+  const columns: ColumnDef<Payment>[] = [
+    {
+      accessorKey: "applicationId",
+      header: "Application",
+      cell: ({ row }) => (
+        <div className="font-medium">{row.original.applicationId}</div>
+      ),
+    },
+    {
+      accessorKey: "applicant",
+      header: "Applicant",
+      cell: ({ row }) => (
+        <div>
+          <div className="font-medium">{row.original.applicant}</div>
+          <div className="text-sm text-muted-foreground">{row.original.applicantEmail}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "amount",
+      header: "Amount",
+      cell: ({ row }) => (
+        <div className="font-medium">
+          ${row.original.amount.toFixed(2)} {row.original.currency}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "method",
+      header: "Method",
+      cell: ({ row }) => (
+        <div className="font-medium">{row.original.method}</div>
+      ),
+    },
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => (
+        <div className="font-medium">{formatDate(row.original.date)}</div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => getStatusBadge(row.original.status),
+      filterFn: (row, id, value) => {
+        if (value === "all") return true;
+        return value === row.original.status;
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex space-x-2">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate(`/dashboard/payment/${row.original.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  // Use real monthly revenue data from API
+  const revenueData = monthlyRevenue.length > 0 ? monthlyRevenue : [
+    { month: "Jan", revenue: 0 },
+    { month: "Feb", revenue: 0 },
+    { month: "Mar", revenue: 0 },
+    { month: "Apr", revenue: 0 },
+    { month: "May", revenue: 0 },
+    { month: "Jun", revenue: 0 },
+    { month: "Jul", revenue: 0 },
+    { month: "Aug", revenue: 0 },
+    { month: "Sep", revenue: 0 },
+    { month: "Oct", revenue: 0 },
+    { month: "Nov", revenue: 0 },
+    { month: "Dec", revenue: 0 },
+  ];
+
+  if (loading && !stats) {
+    return (
+      <AdminLayout title="Loading..." subtitle="Please wait while we fetch the payments">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!loading && payments.length === 0) {
+    return (
+      <AdminLayout title="Payment Management" subtitle="No payments found">
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">
+                <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Payments Found</h3>
+                <p className="text-muted-foreground mb-4">
+                  There are no payments in the system yet. Payments will appear here once users complete visa applications and make payments.
+                </p>
+                <Button onClick={() => fetchPayments()}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout title="Payment Management" subtitle="Track and manage visa application payments">
       <div className="space-y-6">
         {/* Summary Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {summaryStats.map((stat, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold mt-2">{stat.value}</p>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    {stat.icon}
-                  </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Monthly Revenue
+                  </p>
+                  <p className="text-2xl font-bold mt-2">
+                    ${stats?.monthlyRevenue?.toFixed(2) || "0.00"}
+                  </p>
                 </div>
-                <div className="mt-4 flex items-center text-sm">
-                  {stat.status === "increase" ? (
-                    <ArrowUpCircle className="h-4 w-4 text-secondary mr-1" />
-                  ) : (
-                    <ArrowDownCircle className="h-4 w-4 text-primary mr-1" />
-                  )}
-                  <span
-                    className={
-                      stat.status === "increase" ? "text-secondary" : "text-primary"
-                    }
-                  >
-                    {stat.change}
-                  </span>
-                  <span className="text-muted-foreground ml-1">from last month</span>
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <DollarSign className="h-6 w-6 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+              <div className="mt-4 flex items-center text-sm">
+                {stats?.revenueChange !== undefined && (
+                  <>
+                    {stats.revenueChange >= 0 ? (
+                      <ArrowUpCircle className="h-4 w-4 text-secondary mr-1" />
+                    ) : (
+                      <ArrowDownCircle className="h-4 w-4 text-primary mr-1" />
+                    )}
+                    <span className={stats.revenueChange >= 0 ? "text-secondary" : "text-primary"}>
+                      {stats.revenueChange >= 0 ? "+" : ""}{stats.revenueChange.toFixed(1)}%
+                    </span>
+                    <span className="text-muted-foreground ml-1">from last month</span>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Transactions
+                  </p>
+                  <p className="text-2xl font-bold mt-2">{stats?.totalPayments || 0}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-secondary" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center text-sm">
+                {stats?.transactionChange !== undefined && (
+                  <>
+                    {stats.transactionChange >= 0 ? (
+                      <ArrowUpCircle className="h-4 w-4 text-secondary mr-1" />
+                    ) : (
+                      <ArrowDownCircle className="h-4 w-4 text-primary mr-1" />
+                    )}
+                    <span className={stats.transactionChange >= 0 ? "text-secondary" : "text-primary"}>
+                      {stats.transactionChange >= 0 ? "+" : ""}{stats.transactionChange.toFixed(1)}%
+                    </span>
+                    <span className="text-muted-foreground ml-1">from last month</span>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Success Rate
+                  </p>
+                  <p className="text-2xl font-bold mt-2">
+                    {stats?.totalPayments ? Math.round((stats.completedPayments / stats.totalPayments) * 100) : 0}%
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <ArrowUpCircle className="h-6 w-6 text-amber-500" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center text-sm">
+                <span className="text-muted-foreground">
+                  {stats?.completedPayments || 0} of {stats?.totalPayments || 0} successful
+                </span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Charts Section */}
@@ -245,7 +334,28 @@ const AdminPayments = () => {
           {/* Revenue Chart */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Monthly Revenue</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Monthly Revenue</CardTitle>
+                <Select
+                  value={selectedYear.toString()}
+                  onValueChange={(value) => {
+                    const year = parseInt(value);
+                    setSelectedYear(year);
+                    fetchMonthlyRevenue(year);
+                  }}
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="h-80">
@@ -283,119 +393,26 @@ const AdminPayments = () => {
             <CardTitle className="text-lg">Payment Transactions</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-6">
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    placeholder="Search payments..."
-                    className="pl-9 w-full sm:w-auto min-w-[240px]"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex space-x-2 w-full sm:w-auto">
-                <Input
-                  type="date"
-                  className="w-full sm:w-auto"
-                />
-                <Button variant="outline" size="icon">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            
-            <Tabs defaultValue="all">
-              <TabsList className="mb-6">
-                <TabsTrigger value="all">All Payments</TabsTrigger>
-                <TabsTrigger value="paid">Paid</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="refunded">Refunded</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="all" className="space-y-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Application</TableHead>
-                      <TableHead>Applicant</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPayments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell className="font-medium">{payment.id}</TableCell>
-                        <TableCell>{payment.applicationId}</TableCell>
-                        <TableCell>{payment.applicant}</TableCell>
-                        <TableCell>${payment.amount.toFixed(2)} {payment.currency}</TableCell>
-                        <TableCell>{payment.method}</TableCell>
-                        <TableCell>{formatDate(payment.date)}</TableCell>
-                        <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => navigate(`/dashboard/payment/${payment.id}`)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TabsContent>
-              
-              <TabsContent value="paid">
-                <div className="text-center py-10">
-                  <p>Filter applied for paid payments</p>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="pending">
-                <div className="text-center py-10">
-                  <p>Filter applied for pending payments</p>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="refunded">
-                <div className="text-center py-10">
-                  <p>Filter applied for refunded payments</p>
-                </div>
-              </TabsContent>
-            </Tabs>
-            
-            {/* Pagination */}
-            <div className="flex items-center justify-between mt-6">
-              <p className="text-sm text-muted-foreground">
-                Showing <strong>8</strong> of <strong>120</strong> payments
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled>
-                  Previous
-                </Button>
-                <Button variant="outline" size="sm" className="bg-primary/5">1</Button>
-                <Button variant="outline" size="sm">2</Button>
-                <Button variant="outline" size="sm">3</Button>
-                <Button variant="outline" size="sm">
-                  Next
-                </Button>
-              </div>
-            </div>
+            <DataTable
+              columns={columns}
+              data={payments}
+              searchKey="applicant"
+              searchPlaceholder="Search payments..."
+              filterableColumns={[
+                {
+                  id: "status",
+                  title: "Status",
+                  options: [
+                    { label: "All", value: "all" },
+                    { label: "Paid", value: "completed" },
+                    { label: "Pending", value: "pending" },
+                    { label: "Failed", value: "failed" },
+                    { label: "Refunded", value: "refunded" },
+                  ],
+                },
+              ]}
+              onRowClick={(row) => navigate(`/dashboard/payment/${row.id}`)}
+            />
           </CardContent>
         </Card>
       </div>

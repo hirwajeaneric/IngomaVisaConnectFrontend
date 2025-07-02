@@ -1,58 +1,44 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, Download, Calendar, User, FileText, Mail, RefreshCw } from "lucide-react";
+import { CreditCard, Download, Calendar, User, FileText, Mail, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { paymentService, PaymentDetail } from "@/lib/api/services/payment.service";
 
 const AdminPaymentDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const [payment, setPayment] = useState<PaymentDetail | null>(null);
+  const [loading, setLoading] = useState(true);
   
-  // Mock payment data
-  const payment = {
-    id: id || "PAY-5678",
-    applicationId: "APP-2354",
-    applicant: {
-      name: "John Smith",
-      email: "john.smith@example.com",
-      country: "United States"
-    },
-    amount: 90.00,
-    currency: "USD",
-    date: "2025-05-14T09:30:00Z",
-    method: "Credit Card",
-    status: "paid",
-    cardDetails: {
-      type: "Visa",
-      last4: "4242",
-      expiry: "05/27"
-    },
-    items: [
-      {
-        description: "Tourist Visa Application Fee",
-        amount: 85.00
-      },
-      {
-        description: "Processing Fee",
-        amount: 5.00
+  useEffect(() => {
+    const fetchPayment = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const response = await paymentService.getPaymentById(id);
+        setPayment(response.data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch payment details",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
-    ],
-    billingAddress: {
-      line1: "123 Main St",
-      line2: "Apt 4B",
-      city: "New York",
-      state: "NY",
-      postalCode: "10001",
-      country: "United States"
-    },
-    transactionId: "txn_1KjH25GjkUlX9Xp0QWer12Sd",
-    paymentProcessor: "Stripe",
-  };
+    };
+
+    fetchPayment();
+  }, [id]);
   
   const handleDownloadReceipt = () => {
+    if (!payment) return;
+    
     // In a real application, this would fetch and download the actual receipt file
     // For this demo, we'll simulate a download
     const receiptUrl = `data:text/plain;charset=utf-8,${encodeURIComponent(
@@ -77,6 +63,8 @@ const AdminPaymentDetail = () => {
   };
   
   const handleEmailReceipt = () => {
+    if (!payment) return;
+    
     toast({
       title: "Receipt Emailed",
       description: `Receipt has been emailed to ${payment.applicant.email}`
@@ -95,7 +83,7 @@ const AdminPaymentDetail = () => {
   
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case "paid":
+      case "completed":
         return <Badge variant="outline" className="bg-green-100 text-green-800">Paid</Badge>;
       case "pending":
         return <Badge variant="outline" className="bg-amber-100 text-amber-800">Pending</Badge>;
@@ -107,6 +95,26 @@ const AdminPaymentDetail = () => {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  if (loading) {
+    return (
+      <AdminLayout title="Loading..." subtitle="Please wait while we fetch the payment details">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!payment) {
+    return (
+      <AdminLayout title="Payment Not Found" subtitle="The requested payment could not be found">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Payment not found</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title={`Payment ${id}`} subtitle="View payment details and manage transactions">
@@ -182,7 +190,7 @@ const AdminPaymentDetail = () => {
                     <td className="py-4 text-sm text-muted-foreground">Payment Method</td>
                     <td className="py-4 text-right font-medium">
                       {payment.method}
-                      {payment.method === "Credit Card" && (
+                      {payment.cardDetails && (
                         <span className="ml-2 text-muted-foreground">
                           {payment.cardDetails.type} ending in {payment.cardDetails.last4}
                         </span>
@@ -208,8 +216,8 @@ const AdminPaymentDetail = () => {
                     <td className="py-4 text-right font-medium">{payment.applicant.email}</td>
                   </tr>
                   <tr>
-                    <td className="py-4 text-sm text-muted-foreground">Applicant Country</td>
-                    <td className="py-4 text-right font-medium">{payment.applicant.country}</td>
+                    <td className="py-4 text-sm text-muted-foreground">Applicant Phone</td>
+                    <td className="py-4 text-right font-medium">{payment.applicant.phone}</td>
                   </tr>
                 </tbody>
               </table>
