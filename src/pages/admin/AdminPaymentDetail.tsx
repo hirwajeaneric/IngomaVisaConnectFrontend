@@ -164,12 +164,6 @@ const AdminPaymentDetail = () => {
                 <Mail className="h-4 w-4" />
                 Email Receipt
               </Button>
-              {payment.status === "paid" && (
-                <Button variant="outline" className="gap-2 border-red-200 text-red-600 hover:bg-red-50">
-                  <RefreshCw className="h-4 w-4" />
-                  Process Refund
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>

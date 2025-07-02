@@ -133,16 +133,6 @@ const AdminPayments = () => {
     { month: "Jun", revenue: 11900 },
   ];
 
-  // Mock data for payment methods chart
-  const paymentMethodData = [
-    { name: "Credit Card", value: 65 },
-    { name: "Bank Transfer", value: 15 },
-    { name: "Mobile Money", value: 10 },
-    { name: "PayPal", value: 10 },
-  ];
-
-  const COLORS = ["#CE1126", "#1EB53A", "#0052A5", "#FFC107"];
-
   // Mock summary stats
   const summaryStats = [
     {
@@ -251,7 +241,7 @@ const AdminPayments = () => {
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {/* Revenue Chart */}
           <Card>
             <CardHeader>
@@ -281,37 +271,6 @@ const AdminPayments = () => {
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Methods Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Payment Methods</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={paymentMethodData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {paymentMethodData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
@@ -386,7 +345,7 @@ const AdminPayments = () => {
                             <Button 
                               variant="ghost" 
                               size="icon"
-                              onClick={() => navigate(`/admin/payment/${payment.id}`)}
+                              onClick={() => navigate(`/dashboard/payment/${payment.id}`)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>

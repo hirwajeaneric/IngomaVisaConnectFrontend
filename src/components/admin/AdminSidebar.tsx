@@ -87,7 +87,7 @@ export const AdminSidebar = () => {
       label: "Interviews", 
       icon: <Calendar className="h-5 w-5" />, 
       href: "/dashboard/interviews",
-      requireAdmin: true,
+      requireAdmin: false,
       requireOfficer: true,
     },
     { 
